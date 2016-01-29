@@ -133,7 +133,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|boolean
 	 */
 	public function get_types_permissions_check( $request ) {
-		return true; // todo
+		return current_user_can( 'edit_theme_options' );
 	}
 
 	/**

@@ -30,6 +30,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	public function register_routes() {
 
+		// /wp/v2/widgets
 		register_rest_route( $this->namespace, '/' . $this->rest_base, array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -44,9 +45,35 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				'args' => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
 			),
 
-			'schema' => array( $this, 'get_public_item_schema' ),
+			'schema' => array( $this, 'get_public_items_schema' ),
 		) );
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', array(
+
+		// /wp/v2/widgets/:id_base
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)', array(
+			array(
+				'methods'         => WP_REST_Server::READABLE,
+				'callback'        => array( $this, 'get_item' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				'args'            => array(
+					'context'          => $this->get_context_param( array( 'default' => 'view' ) ),
+				),
+			),
+			array(
+				'methods'         => WP_REST_Server::EDITABLE,
+				'callback'        => array( $this, 'update_item' ),
+				'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				'args'            => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+			),
+			array(
+				'methods'  => WP_REST_Server::DELETABLE,
+				'callback' => array( $this, 'delete_item' ),
+				'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+			),
+			'schema' => array( $this, 'get_public_items_schema' ),
+		) );
+
+		// /wp/v2/widgets/:id_base/:number
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)/(?P<number>[\d]+)', array(
 			array(
 				'methods'         => WP_REST_Server::READABLE,
 				'callback'        => array( $this, 'get_item' ),
@@ -69,7 +96,9 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
-		register_rest_route( $this->namespace, '/' . $this->rest_base .'/types', array(
+
+		// /wp/v2/widget-types/
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/widget-types', array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_types' ),

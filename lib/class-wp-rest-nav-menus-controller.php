@@ -17,7 +17,6 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 
 	public function get_items_permissions_check( $request ) {
 
-
 	}
 
 	public function get_items( $request ) {
@@ -51,5 +50,4 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 	public function get_collection_params() {
 
 	}
-
 }

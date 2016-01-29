@@ -49,5 +49,4 @@ class WP_REST_Nav_Menu_Items_Controller extends WP_REST_Controller {
 	public function get_collection_params() {
 
 	}
-
 }

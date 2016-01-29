@@ -13,13 +13,28 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 	public function register_routes() {
 		// @todo
 
+		register_rest_route( $this->namespace, '/' . $this->rest_base, array(
+			array(
+				'methods'         => WP_REST_Server::READABLE,
+				'callback'        => array( $this, 'get_items' ),
+				'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				'args'            => $this->get_collection_params(),
+			),
+			'schema' => array( $this, 'get_public_item_schema' ),
+		) );
+
 	}
 
 	public function get_items_permissions_check( $request ) {
 
+		return true;
 	}
 
 	public function get_items( $request ) {
+
+		$nav_menu_items = array();
+		$response = rest_ensure_response( $nav_menu_items );
+		return $response;
 
 	}
 

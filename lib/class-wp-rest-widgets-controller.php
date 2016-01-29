@@ -5,9 +5,25 @@
  */
 class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
-	public function __construct() {
+	/**
+	 * Widget objects.
+	 *
+	 * @see WP_Widget_Factory::$widgets
+	 * @var WP_Widget[]
+	 */
+	public $widgets;
+
+	/**
+	 * WP_REST_Widgets_Controller constructor.
+	 *
+	 * @param WP_Widget[] $widgets Widget objects.
+	 */
+	public function __construct( $widgets ) {
 		$this->namespace = 'wp/v2';
 		$this->rest_base = 'widgets';
+		$this->widgets = $widgets;
+
+		// @todo Now given $this->widgets, inject schema information for Core widgets in lieu of them being in core now. See #35574.
 
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
@@ -108,7 +124,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public function get_types( $request ) {
 		global $wp_widget_factory;
 
-		if ( empty( $wp_widget_factory || empty( $wp_widget_factory->widgets ) ) ) {
+		if ( empty( $wp_widget_factory ) || empty( $wp_widget_factory->widgets ) ) {
 			return rest_ensure_response( array() );
 		}
 

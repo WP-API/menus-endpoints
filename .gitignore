@@ -1,0 +1,6 @@
+.DS_Store
+readme.txt
+composer.lock
+node_modules
+vendor
+wp-api

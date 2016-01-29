@@ -30,6 +30,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	public function register_routes() {
 
+		// /wp/v2/widgets
 		register_rest_route( $this->namespace, '/' . $this->rest_base, array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -44,9 +45,35 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				'args' => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
 			),
 
-			'schema' => array( $this, 'get_public_item_schema' ),
+			'schema' => array( $this, 'get_public_items_schema' ),
 		) );
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', array(
+
+		// /wp/v2/widgets/:id_base
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)', array(
+			array(
+				'methods'         => WP_REST_Server::READABLE,
+				'callback'        => array( $this, 'get_item' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				'args'            => array(
+					'context'          => $this->get_context_param( array( 'default' => 'view' ) ),
+				),
+			),
+			array(
+				'methods'         => WP_REST_Server::EDITABLE,
+				'callback'        => array( $this, 'update_item' ),
+				'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				'args'            => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+			),
+			array(
+				'methods'  => WP_REST_Server::DELETABLE,
+				'callback' => array( $this, 'delete_item' ),
+				'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+			),
+			'schema' => array( $this, 'get_public_items_schema' ),
+		) );
+
+		// /wp/v2/widgets/:id_base/:number
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)/(?P<number>[\d]+)', array(
 			array(
 				'methods'         => WP_REST_Server::READABLE,
 				'callback'        => array( $this, 'get_item' ),
@@ -69,12 +96,23 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
-		register_rest_route( $this->namespace, '/' . $this->rest_base .'/types', array(
+
+		// /wp/v2/widget-types/
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/widget-types', array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_types' ),
 				'permission_callback' => array( $this, 'get_types_permissions_check' ),
 			),
+			'schema' => array( $this, 'get_public_item_schema' ),
+		) );
+		register_rest_route( $this->namespace, '/' . $this->rest_base .'/types/(?P<type>[\w-]+)', array(
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array( $this, 'get_type' ),
+				'permission_callback' => array( $this, 'get_types_permissions_check' ),
+			),
+
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 	}
@@ -112,7 +150,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function get_collection_params() {
-
+		return array();
 	}
 
 	/**
@@ -122,15 +160,12 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_types( $request ) {
-		global $wp_widget_factory;
-
-		if ( empty( $wp_widget_factory ) || empty( $wp_widget_factory->widgets ) ) {
+		if ( empty( $this->widgets ) ) {
 			return rest_ensure_response( array() );
 		}
 
 		$schemas = array();
-		foreach( $wp_widget_factory->widgets as $key => $type ) {
-			error_log( $key );
+		foreach ( $this->widgets as $key => $type ) {
 			if ( empty( $type->id_base ) ) {
 				continue;
 			}
@@ -140,6 +175,27 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		$response = rest_ensure_response( $schemas );
 
 		return $response;
+	}
+
+	/**
+	 * Get the requested widget type schema
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public function get_type( $request ) {
+
+        if ( empty( $request['type'] ) ) {
+            return new WP_Error( 'rest_widget_missing_type', __( 'Request missing widget type.' ), array( 'status' => 400 ) );
+        }
+
+        $schema = $this->get_type_schema( $request['type'] );
+
+        if ( $schema === false ) {
+            return new WP_Error( 'rest_widget_type_not_found', __( 'Requested widget type was not found.' ), array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( $schema );
 	}
 
 	/**
@@ -162,6 +218,52 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return array $schema
 	 */
 	public function get_type_schema( $id_base ) {
-		return $id_base;
+
+		$widget = null;
+		foreach ( $this->widgets as $this_widget ) {
+			if ( $id_base === $this_widget->id_base ) {
+				$widget = $this_widget;
+				break;
+			}
+		}
+		if ( empty( $widget ) ) {
+			return false;
+		}
+
+		$properties = array(
+			'id'              => array(
+				'description' => __( 'Unique identifier for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+				'readonly'    => true,
+			),
+			'type'            => array(
+				'description' => __( 'Type of Widget for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+				'readonly'    => true,
+			),
+		);
+
+		if ( in_array( $id_base, array( 'pages', 'calendar', 'archives', 'meta', 'search', 'text', 'categories', 'recent-posts', 'recent-comments', 'rss', 'tag_cloud', 'nav_menu', 'next_recent_posts' ), true ) ) {
+			$properties['title'] = array(
+				'description' => __( 'The title for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+			);
+		}
+
+		$schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => $widget->id_base,
+			'type'       => 'object',
+
+			/*
+			 * Base properties for every Widget.
+			 */
+			'properties' => $properties,
+		);
+
+		return $schema;
 	}
 }

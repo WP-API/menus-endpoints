@@ -122,15 +122,12 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_types( $request ) {
-		global $wp_widget_factory;
-
-		if ( empty( $wp_widget_factory ) || empty( $wp_widget_factory->widgets ) ) {
+		if ( empty( $this->widgets ) ) {
 			return rest_ensure_response( array() );
 		}
 
 		$schemas = array();
-		foreach( $wp_widget_factory->widgets as $key => $type ) {
-			error_log( $key );
+		foreach ( $this->widgets as $key => $type ) {
 			if ( empty( $type->id_base ) ) {
 				continue;
 			}

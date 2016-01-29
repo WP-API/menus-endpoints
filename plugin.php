@@ -31,3 +31,10 @@ function create_initial_nav_menu_routes() {
 	$nav_menu_item_route->register_routes();
 
 }
+
+if ( class_exists( 'WP_REST_Controller' )
+	&& ! class_exists( 'WP_REST_Widgets_Controller' ) ) {
+	require_once dirname( __FILE__ ) . '/lib/class-wp-rest-widgets-controller.php';
+}
+
+new WP_REST_Widgets_Controller();

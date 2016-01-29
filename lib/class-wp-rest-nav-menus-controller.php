@@ -20,7 +20,6 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				'args'            => $this->get_collection_params(),
 			),
-
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
@@ -29,7 +28,6 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 	public function get_items_permissions_check( $request ) {
 
 		return true;
-
 	}
 
 	public function get_items( $request ) {
@@ -67,5 +65,4 @@ class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
 	public function get_collection_params() {
 
 	}
-
 }

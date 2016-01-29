@@ -18,3 +18,10 @@ if ( class_exists( 'WP_REST_Controller' )
 	&& ! class_exists( 'WP_REST_Menu_Items_Controller' ) ) {
 	require_once dirname( __FILE__ ) . '/lib/class-wp-rest-menu-items-controller.php';
 }
+
+if ( class_exists( 'WP_REST_Controller' )
+	&& ! class_exists( 'WP_REST_Widgets_Controller' ) ) {
+	require_once dirname( __FILE__ ) . '/lib/class-wp-rest-widgets-controller.php';
+}
+
+new WP_REST_Widgets_Controller();

@@ -112,7 +112,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function get_collection_params() {
-
+		return array();
 	}
 
 	/**

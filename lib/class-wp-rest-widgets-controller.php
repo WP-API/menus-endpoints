@@ -108,7 +108,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public function get_types( $request ) {
 		global $wp_widget_factory;
 
-		if ( empty( $wp_widget_factory || empty( $wp_widget_factory->widgets ) ) ) {
+		if ( empty( $wp_widget_factory ) || empty( $wp_widget_factory->widgets ) ) {
 			return rest_ensure_response( array() );
 		}
 

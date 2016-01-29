@@ -159,6 +159,52 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return array $schema
 	 */
 	public function get_type_schema( $id_base ) {
-		return $id_base;
+
+		$widget = null;
+		foreach ( $this->widgets as $this_widget ) {
+			if ( $id_base === $this_widget->id_base ) {
+				$widget = $this_widget;
+				break;
+			}
+		}
+		if ( empty( $widget ) ) {
+			return false;
+		}
+
+		$properties = array(
+			'id'              => array(
+				'description' => __( 'Unique identifier for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+				'readonly'    => true,
+			),
+			'type'            => array(
+				'description' => __( 'Type of Widget for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+				'readonly'    => true,
+			),
+		);
+
+		if ( in_array( $id_base, array( 'pages', 'calendar', 'archives', 'meta', 'search', 'text', 'categories', 'recent-posts', 'recent-comments', 'rss', 'tag_cloud', 'nav_menu', 'next_recent_posts' ), true ) ) {
+			$properties['title'] = array(
+				'description' => __( 'The title for the object.' ),
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit', 'embed' ),
+			);
+		}
+
+		$schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => $widget->id_base,
+			'type'       => 'object',
+
+			/*
+			 * Base properties for every Widget.
+			 */
+			'properties' => $properties,
+		);
+
+		return $schema;
 	}
 }

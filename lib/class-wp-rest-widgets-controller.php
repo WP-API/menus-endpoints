@@ -77,6 +77,15 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
+		register_rest_route( $this->namespace, '/' . $this->rest_base .'/types/(?P<type>[\w-]+)', array(
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array( $this, 'get_type' ),
+				'permission_callback' => array( $this, 'get_types_permissions_check' ),
+			),
+
+			'schema' => array( $this, 'get_public_item_schema' ),
+		) );
 	}
 
 	public function get_items_permissions_check( $request ) {
@@ -137,6 +146,27 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		$response = rest_ensure_response( $schemas );
 
 		return $response;
+	}
+
+	/**
+	 * Get the requested widget type schema
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public function get_type( $request ) {
+
+        if ( empty( $request['type'] ) ) {
+            return new WP_Error( 'rest_widget_missing_type', __( 'Request missing widget type.' ), array( 'status' => 400 ) );
+        }
+
+        $schema = $this->get_type_schema( $request['type'] );
+
+        if ( $schema === false ) {
+            return new WP_Error( 'rest_widget_type_not_found', __( 'Requested widget type was not found.' ), array( 'status' => 404 ) );
+        }
+
+        return rest_ensure_response( $schema );
 	}
 
 	/**

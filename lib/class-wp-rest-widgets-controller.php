@@ -98,7 +98,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		) );
 
 		// /wp/v2/widget-types/
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/widget-types', array(
+		register_rest_route( $this->namespace, '/widget-types', array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_types' ),
@@ -118,7 +118,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function get_items_permissions_check( $request ) {
-
+		return true;
 	}
 
 	public function get_items( $request ) {
@@ -126,7 +126,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function get_item_permissions_check( $request ) {
-
+		return true;
 	}
 
 	public function get_item( $request ) {
@@ -134,7 +134,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function delete_item_permission_check( $request ) {
-
+		return true;
 	}
 
 	public function delete_item( $request ) {
@@ -205,7 +205,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|boolean
 	 */
 	public function get_types_permissions_check( $request ) {
-		return current_user_can( 'edit_theme_options' );
+		return true; // @todo edit_theme_options
 	}
 
 	/**
@@ -245,12 +245,131 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 			),
 		);
 
+		$core_widget_schemas = array(
+			'archives' => array(
+				'count' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+				'dropdown' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+			),
+			'calendar' => array(),
+			'categories' => array(
+				'count' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+				'hierarchical' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+				'dropdown' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+			),
+			'meta' => array(),
+			'nav_menu' => array(
+				'sortby' => array(
+					'type' => 'string',
+					'default' => 'post_title',
+				),
+				'exclude' => array(
+					'type' => 'string',
+					'default' => '',
+				),
+			),
+			'pages' => array(
+				'sortby' => array(
+					'type' => 'string',
+					'default' => 'post_title',
+				),
+				'exclude' => array(
+					'type' => 'string',
+					'default' => '',
+				),
+			),
+			'recent_comments' => array(
+				'number' => array(
+					'type' => 'integer',
+					'default' => 5,
+				),
+			),
+			'recent_posts' => array(
+				'number' => array(
+					'type' => 'integer',
+					'default' => 5,
+				),
+				'show_date' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+			),
+			'rss' => array(
+				'url' => array(
+					'type' => 'string',
+					'default' => '',
+				),
+				'link' => array(
+					'type' => 'string',
+					'default' => '',
+				),
+				'items' => array(
+					'type' => 'integer',
+					'default' => 10,
+				),
+				'error' => array(
+					'type' => 'string',
+					'default' => null,
+				),
+				'show_summary' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+				'show_author' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+				'show_date' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+			),
+			'search' => array(),
+			'tag_cloud' => array(
+				'taxonomy' => array(
+					'type' => 'string',
+					'default' => 'post_tag',
+				),
+			),
+			'text' => array(
+				'text' => array(
+					'type' => 'string',
+					'default' => '',
+				),
+				'filter' => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
+			),
+		);
+
 		if ( in_array( $id_base, array( 'pages', 'calendar', 'archives', 'meta', 'search', 'text', 'categories', 'recent-posts', 'recent-comments', 'rss', 'tag_cloud', 'nav_menu', 'next_recent_posts' ), true ) ) {
 			$properties['title'] = array(
 				'description' => __( 'The title for the object.' ),
 				'type'        => 'string',
-				'context'     => array( 'view', 'edit', 'embed' ),
 			);
+		}
+		if ( isset( $core_widget_schemas[ $id_base ] ) ) {
+			$properties = array_merge( $properties, $core_widget_schemas[ $id_base ] );
+		}
+		foreach ( array_keys( $properties ) as $field_id ) {
+			if ( ! isset( $properties[ $field_id ]['context'] ) ) {
+				$properties[ $field_id ]['context'] = array( 'view', 'edit', 'embed' );
+			}
 		}
 
 		$schema = array(

@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: WP REST API - Menu Endpoints
+ * Plugin Name: WP REST API - Menus and Widgets Endpoints
  * Description: Menu endpoints for the WP REST API
  * Author: WP REST API Team
  * Author URI: http://wp-api.org
  * Version: 0.1.0
- * Plugin URI: https://github.com/WP-API/wp-api-menus-endpoints
+ * Plugin URI: https://github.com/WP-API/wp-api-menus-widgets-endpoints
  * License: GPL2+
  */
 

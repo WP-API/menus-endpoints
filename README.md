@@ -1,3 +1,3 @@
-# wp-api-menus-endpoints
+# WP-API: Nav Menus and Widgets Endpoints
 
-WordPress Menus Endpoints Feature Plugin
+Feature plugin for Nav Menus and Widgets Endpoints

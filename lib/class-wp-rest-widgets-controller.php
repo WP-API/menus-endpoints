@@ -161,6 +161,10 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 			$widgets[] = $this->prepare_response_for_collection( $data );
 		}
 
+		if ( !empty( $widgets ) && !is_null( $args['sidebar'] ) ) {
+			$widgets = $this->sort_widgets_by_sidebar_order( $args['sidebar'], $widgets );
+		}
+
 		return rest_ensure_response( $widgets );
 	}
 
@@ -199,6 +203,33 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Sort the widgets by their order in the sidebar.
+	 *
+	 * Widgets not assigned to the specified sidebar will be discarded.
+	 *
+	 * @param string sidebar Sidebar id
+	 * @param array widgets Widgets to sort
+	 * @return array
+	 */
+	public function sort_widgets_by_sidebar_order( $sidebar, $widgets ) {
+		if ( empty( $this->sidebars[$sidebar] ) ) {
+			return array();
+		}
+
+		$new_widgets = array();
+		foreach( $this->sidebars[$sidebar] as $widget_id ) {
+			foreach( $widgets as $widget ) {
+				if ( $widget_id === $widget['id'] ) {
+					$new_widgets[] = $widget;
+					break;
+				}
+			}
+		}
+
+		return $new_widgets;
 	}
 
 	public function get_item( $request ) {

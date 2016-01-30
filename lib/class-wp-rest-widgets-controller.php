@@ -14,14 +14,26 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public $widgets;
 
 	/**
+	 * Registered widgets.
+	 */
+	public $registered_widgets;
+
+	/**
+	 * Sidebars
+	 */
+	public $sidebars;
+
+	/**
 	 * WP_REST_Widgets_Controller constructor.
 	 *
 	 * @param WP_Widget[] $widgets Widget objects.
 	 */
-	public function __construct( $widgets ) {
+	public function __construct( $widgets, $registered_widgets ) {
 		$this->namespace = 'wp/v2';
 		$this->rest_base = 'widgets';
 		$this->widgets = $widgets;
+		$this->registered_widgets = $registered_widgets;
+		$this->sidebars = wp_get_sidebars_widgets();
 
 		// @todo Now given $this->widgets, inject schema information for Core widgets in lieu of them being in core now. See #35574.
 
@@ -121,12 +133,66 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		return true;
 	}
 
+	/**
+	 * Get a collection of widgets
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_Error|WP_REST_Response
+	 */
 	public function get_items( $request ) {
+		if ( empty( $this->registered_widgets ) ) {
+			return rest_ensure_response( array() );
+		}
 
+		// TODO pagination
+
+		$widgets = array();
+		foreach( $this->registered_widgets as $instance_id => $widget ) {
+			if ( !$this->get_instance_permissions_check( $instance_id ) ) {
+				continue;
+			}
+			$data = $this->prepare_item_for_response( $widget, $request );
+			$widgets[] = $this->prepare_response_for_collection( $data );
+		}
+
+		return rest_ensure_response( $widgets );
 	}
 
 	public function get_item_permissions_check( $request ) {
 		return true;
+	}
+
+	/**
+	 * Check if current user can get the widget instance.
+	 *
+	 * @param string $instance_id Instance id
+	 * @return bool
+	 */
+	public function get_instance_permissions_check( $instance_id ) {
+		// Require `edit_theme_options` to view unassigned widgets
+		$sidebar = $this->get_instance_sidebar( $instance_id );
+		if ( $sidebar === false || $sidebar == 'wp_inactive_widgets' ) {
+			return current_user_can( 'edit_theme_options' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get the sidebar a widget instance is assigned to
+	 *
+	 * @param string id Widget instance id
+	 * @return bool|string Sidebar id it is assigned to or false if not found. Will
+	 *  return `wp_inactive_widgets` as sidebar for unassigned widgets
+	 */
+	public function get_instance_sidebar( $id ) {
+		foreach( $this->sidebars as $sidebar_id => $widgets ) {
+			if ( in_array( $id, $widgets ) ) {
+				return $sidebar_id;
+			}
+		}
+
+		return false;
 	}
 
 	public function get_item( $request ) {
@@ -141,8 +207,57 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	}
 
-	public function prepare_item_for_response( $item, $request ) {
+	/**
+	 * Prepare a single widget output for response
+	 *
+	 * @param array $widget Widget instance
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response $data
+	 */
+	public function prepare_item_for_response( $widget, $request ) {
 
+		$id = $widget['id'];
+		$id_base = $widget['callback'][0]->id_base;
+		$array_key = $widget['params'][0]['number'];
+
+		$values = array(
+			'id' => $id,
+			'type' => $id_base,
+		);
+		if ( !empty( $array_key ) ) {
+			$widgets = get_option( 'widget_' . $id_base );
+			if ( isset( $widgets[$array_key] ) ) {
+				$values = array_merge( $values, $widgets[$array_key] );
+			}
+		}
+
+		$schema = $this->get_type_schema( $widget['callback'][0]->id_base );
+
+		$data = array();
+		foreach( $schema['properties'] as $property_id => $property ) {
+
+			// TODO check for public visibility of property and run permissions
+			// check for private properties.
+
+			if ( isset( $values[$property_id] ) && gettype( $values[$property_id] ) === $property['type'] ) {
+				$data[$property_id] = $values[$property_id];
+			} elseif ( isset( $property['default'] ) ) {
+				$data[$property_id] = $property['default'];
+			}
+		}
+
+		$response = rest_ensure_response( $data );
+
+		// @TODO Add _link to sidebar if assigned?
+
+		/**
+		 * Filter the widget data for a response.
+		 *
+		 * @param WP_REST_Response   $response   The response object.
+		 * @param array              $widget     Widget instance.
+		 * @param WP_REST_Request    $request    Request object.
+		 */
+		return apply_filters( 'rest_prepare_widget', $response, $widget, $request );
 	}
 
 	public function get_item_schema() {
@@ -210,9 +325,6 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	/**
 	 * Return a schema matching this widget type
-	 *
-	 * TODO this is a placeholder. A final implementation needs to look up a
-	 * schema which would specify the visibility and type of widget control options.
 	 *
 	 * @param string $id_base Registered widget type
 	 * @return array $schema
@@ -292,13 +404,13 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 					'default' => '',
 				),
 			),
-			'recent_comments' => array(
+			'recent-comments' => array(
 				'number' => array(
 					'type' => 'integer',
 					'default' => 5,
 				),
 			),
-			'recent_posts' => array(
+			'recent-posts' => array(
 				'number' => array(
 					'type' => 'integer',
 					'default' => 5,

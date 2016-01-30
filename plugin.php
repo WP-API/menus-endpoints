@@ -40,6 +40,11 @@ function wp_api_nav_menus_widgets_init_controllers() {
 	 */
 	global $wp_widget_factory;
 
-	$widgets_controller = new WP_REST_Widgets_Controller( $wp_widget_factory->widgets );
+	/**
+	 * @type array $wp_registered_widgets
+	 */
+	global $wp_registered_widgets;
+
+	$widgets_controller = new WP_REST_Widgets_Controller( $wp_widget_factory->widgets, $wp_registered_widgets );
 	$widgets_controller->register_routes();
 }

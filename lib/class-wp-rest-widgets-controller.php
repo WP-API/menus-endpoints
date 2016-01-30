@@ -185,17 +185,17 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 */
 	public function get_type( $request ) {
 
-        if ( empty( $request['type'] ) ) {
-            return new WP_Error( 'rest_widget_missing_type', __( 'Request missing widget type.' ), array( 'status' => 400 ) );
-        }
+		if ( empty( $request['type'] ) ) {
+			return new WP_Error( 'rest_widget_missing_type', __( 'Request missing widget type.' ), array( 'status' => 400 ) );
+		}
 
-        $schema = $this->get_type_schema( $request['type'] );
+		$schema = $this->get_type_schema( $request['type'] );
 
-        if ( $schema === false ) {
-            return new WP_Error( 'rest_widget_type_not_found', __( 'Requested widget type was not found.' ), array( 'status' => 404 ) );
-        }
+		if ( $schema === false ) {
+			return new WP_Error( 'rest_widget_type_not_found', __( 'Requested widget type was not found.' ), array( 'status' => 404 ) );
+		}
 
-        return rest_ensure_response( $schema );
+		return rest_ensure_response( $schema );
 	}
 
 	/**

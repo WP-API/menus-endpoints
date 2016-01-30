@@ -142,13 +142,19 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public function get_items( $request ) {
 		if ( empty( $this->registered_widgets ) ) {
 			return rest_ensure_response( array() );
-		}
+		};
+
+		$args = array();
+		$args['sidebar'] = $request['sidebar'];
 
 		// TODO pagination
 
 		$widgets = array();
 		foreach( $this->registered_widgets as $instance_id => $widget ) {
 			if ( !$this->get_instance_permissions_check( $instance_id ) ) {
+				continue;
+			}
+			if ( !is_null( $args['sidebar'] ) && $args['sidebar'] !== $this->get_instance_sidebar( $instance_id ) ) {
 				continue;
 			}
 			$data = $this->prepare_item_for_response( $widget, $request );
@@ -264,8 +270,24 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	}
 
+	/**
+	 * Get the query params for collections of attachments.
+	 *
+	 * @return array
+	 */
 	public function get_collection_params() {
-		return array();
+		$params = parent::get_collection_params();
+
+		$params['context']['default'] = 'view';
+
+		$params['sidebar'] = array(
+			'description'       => __( 'Limit result set to widgets assigned to this sidebar.' ),
+			'type'              => 'string',
+			'default'           => null,
+			'sanitize_callback' => 'sanitize_text_field',
+		);
+
+		return $params;
 	}
 
 	/**

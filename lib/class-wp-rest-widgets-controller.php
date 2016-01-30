@@ -284,7 +284,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 			'description'       => __( 'Limit result set to widgets assigned to this sidebar.' ),
 			'type'              => 'string',
 			'default'           => null,
-			'sanitize_callback' => 'sanitize_text_field',
+			'sanitize_callback' => 'sanitize_key',
 		);
 
 		return $params;

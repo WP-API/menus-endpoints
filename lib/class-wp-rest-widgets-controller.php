@@ -33,18 +33,6 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		$this->rest_base = 'widgets';
 		$this->widgets = $widgets;
 
-		foreach( $this->widgets as $widget ) {
-			$settings = $widget->get_settings();
-			foreach( $settings as $key => $values ) {
-				$this->instances[] = array(
-					'id' => $widget->id_base . '-' . $key,
-					'array_index' => $key,
-					'id_base' => $widget->id_base,
-					'settings' => $values,
-				);
-			}
-		}
-
 		$this->sidebars = wp_get_sidebars_widgets();
 
 		// @todo Now given $this->widgets, inject schema information for Core widgets in lieu of them being in core now. See #35574.
@@ -150,6 +138,19 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_items( $request ) {
+
+		foreach( $this->widgets as $widget ) {
+			$settings = $widget->get_settings();
+			foreach( $settings as $key => $values ) {
+				$this->instances[] = array(
+					'id' => $widget->id_base . '-' . $key,
+					'array_index' => $key,
+					'id_base' => $widget->id_base,
+					'settings' => $values,
+				);
+			}
+		}
+
 		if ( empty( $this->instances ) ) {
 			return rest_ensure_response( array() );
 		};

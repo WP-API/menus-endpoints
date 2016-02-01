@@ -6,9 +6,7 @@ Endpoints to define for widgets:
 
 ```
 GET  /widgets
-GET  /widgets/:type
-POST /widgets/:type
+GET  /widgets/:id_base-:number
 GET  /widget-types
-GET  /widgets/:type/:number
-PUT  /widgets/:type/:number
+GET  /widget-types/:type
 ```

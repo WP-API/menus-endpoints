@@ -31,6 +31,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public function __construct( $widgets ) {
 		$this->namespace = 'wp/v2';
 		$this->rest_base = 'widgets';
+		$this->rest_base_types = 'widget-types';
 		$this->widgets = $widgets;
 
 		$this->sidebars = wp_get_sidebars_widgets();
@@ -108,7 +109,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		) );
 
 		// /wp/v2/widget-types/
-		register_rest_route( $this->namespace, '/widget-types', array(
+		register_rest_route( $this->namespace, '/' . $this->rest_base_types, array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_types' ),
@@ -116,7 +117,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
-		register_rest_route( $this->namespace, '/' . $this->rest_base .'/types/(?P<type>[\w-]+)', array(
+		register_rest_route( $this->namespace, '/' . $this->rest_base_types . '/(?P<type>[\w-]+)', array(
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_type' ),

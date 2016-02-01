@@ -60,7 +60,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		) );
 
 		// /wp/v2/widgets/:id_base
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)', array(
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>.+)-(?P<number>\d+)', array(
 			array(
 				'methods'         => WP_REST_Server::READABLE,
 				'callback'        => array( $this, 'get_item' ),
@@ -81,31 +81,6 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 			),
 			'schema' => array( $this, 'get_public_items_schema' ),
-		) );
-
-		// /wp/v2/widgets/:id_base/:number
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id_base>[^/]+)/(?P<number>[\d]+)', array(
-			array(
-				'methods'         => WP_REST_Server::READABLE,
-				'callback'        => array( $this, 'get_item' ),
-				'permission_callback' => array( $this, 'get_item_permissions_check' ),
-				'args'            => array(
-					'context'          => $this->get_context_param( array( 'default' => 'view' ) ),
-				),
-			),
-			array(
-				'methods'         => WP_REST_Server::EDITABLE,
-				'callback'        => array( $this, 'update_item' ),
-				'permission_callback' => array( $this, 'update_item_permissions_check' ),
-				'args'            => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
-			),
-			array(
-				'methods'  => WP_REST_Server::DELETABLE,
-				'callback' => array( $this, 'delete_item' ),
-				'permission_callback' => array( $this, 'delete_item_permissions_check' ),
-			),
-
-			'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
 		// /wp/v2/widget-types/
@@ -181,7 +156,15 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	}
 
 	public function get_item_permissions_check( $request ) {
-		return true;
+		if ( empty( $request['id_base'] ) ) {
+			return new WP_Error( 'rest_widget_missing_request_id_base', __( 'Request for widget requires the id_base.' ), array( 'status' => 400 ) );
+		}
+
+		if ( empty( $request['number'] ) ) {
+			return new WP_Error( 'rest_widget_missing_request_number', __( 'Request for widget requires the number.' ), array( 'status' => 400 ) );
+		}
+
+		return $this->get_instance_permissions_check( $this->get_instance_id_by_id_base( $request['id_base'], $request['number'] ) );
 	}
 
 	/**
@@ -246,6 +229,31 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 	public function get_item( $request ) {
 
+		$instance = array();
+		foreach( $this->widgets as $widget ) {
+			if ( $widget->id_base !== $request['id_base'] ) {
+				continue;
+			}
+			$settings = $widget->get_settings();
+			foreach( $settings as $key => $values ) {
+				if ( $request['number'] == $key ) {
+					$instance = array(
+						'id' => $this->get_instance_id_by_id_base( $request['id_base'], $request['number'] ),
+						'array_index' => $key,
+						'id_base' => $widget->id_base,
+						'settings' => $values,
+					);
+					break;
+				}
+			}
+			if ( !empty( $instance ) ) {
+				break;
+			}
+		}
+
+		$data = empty( $instance ) ? array() : $this->prepare_item_for_response( $instance, $request );
+
+		return rest_ensure_response( $data );
 	}
 
 	public function delete_item_permission_check( $request ) {
@@ -320,6 +328,18 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		);
 
 		return $params;
+	}
+
+	/**
+	 * Return instance ID from id_base and number.
+	 *
+	 * @param string id_base Type of widget
+	 * @param int number Array key of widget instance stored in wp_options
+	 */
+	public function get_instance_id_by_id_base( $id_base, $number ) {
+		// If core implements widgets as posts, this can retrieve the ID from
+		// the database. See trac #35669
+		return $id_base . '-' . $number;
 	}
 
 	/**

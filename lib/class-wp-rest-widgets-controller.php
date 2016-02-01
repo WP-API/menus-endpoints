@@ -14,9 +14,9 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public $widgets;
 
 	/**
-	 * Registered widgets.
+	 * Widget instances.
 	 */
-	public $registered_widgets;
+	public $instances = array();
 
 	/**
 	 * Sidebars
@@ -28,16 +28,14 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 *
 	 * @param WP_Widget[] $widgets Widget objects.
 	 */
-	public function __construct( $widgets, $registered_widgets ) {
+	public function __construct( $widgets ) {
 		$this->namespace = 'wp/v2';
 		$this->rest_base = 'widgets';
 		$this->widgets = $widgets;
-		$this->registered_widgets = $registered_widgets;
+
 		$this->sidebars = wp_get_sidebars_widgets();
 
 		// @todo Now given $this->widgets, inject schema information for Core widgets in lieu of them being in core now. See #35574.
-
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
 
 	public function register_routes() {
@@ -140,7 +138,20 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_items( $request ) {
-		if ( empty( $this->registered_widgets ) ) {
+
+		foreach( $this->widgets as $widget ) {
+			$settings = $widget->get_settings();
+			foreach( $settings as $key => $values ) {
+				$this->instances[] = array(
+					'id' => $widget->id_base . '-' . $key,
+					'array_index' => $key,
+					'id_base' => $widget->id_base,
+					'settings' => $values,
+				);
+			}
+		}
+
+		if ( empty( $this->instances ) ) {
 			return rest_ensure_response( array() );
 		};
 
@@ -149,23 +160,23 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 		// TODO pagination
 
-		$widgets = array();
-		foreach( $this->registered_widgets as $instance_id => $widget ) {
-			if ( !$this->get_instance_permissions_check( $instance_id ) ) {
+		$instances = array();
+		foreach( $this->instances as $instance ) {
+			if ( !$this->get_instance_permissions_check( $instance['id'] ) ) {
 				continue;
 			}
-			if ( !is_null( $args['sidebar'] ) && $args['sidebar'] !== $this->get_instance_sidebar( $instance_id ) ) {
+			if ( !is_null( $args['sidebar'] ) && $args['sidebar'] !== $this->get_instance_sidebar( $instance['id'] ) ) {
 				continue;
 			}
-			$data = $this->prepare_item_for_response( $widget, $request );
-			$widgets[] = $this->prepare_response_for_collection( $data );
+			$data = $this->prepare_item_for_response( $instance, $request );
+			$instances[] = $this->prepare_response_for_collection( $data );
 		}
 
-		if ( !empty( $widgets ) && !is_null( $args['sidebar'] ) ) {
-			$widgets = $this->sort_widgets_by_sidebar_order( $args['sidebar'], $widgets );
+		if ( !empty( $instances ) && !is_null( $args['sidebar'] ) ) {
+			$instances = $this->sort_widgets_by_sidebar_order( $args['sidebar'], $instances );
 		}
 
-		return rest_ensure_response( $widgets );
+		return rest_ensure_response( $instances );
 	}
 
 	public function get_item_permissions_check( $request ) {
@@ -211,19 +222,19 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * Widgets not assigned to the specified sidebar will be discarded.
 	 *
 	 * @param string sidebar Sidebar id
-	 * @param array widgets Widgets to sort
+	 * @param array instances Widget instances to sort
 	 * @return array
 	 */
-	public function sort_widgets_by_sidebar_order( $sidebar, $widgets ) {
+	public function sort_widgets_by_sidebar_order( $sidebar, $instances ) {
 		if ( empty( $this->sidebars[$sidebar] ) ) {
 			return array();
 		}
 
 		$new_widgets = array();
 		foreach( $this->sidebars[$sidebar] as $widget_id ) {
-			foreach( $widgets as $widget ) {
-				if ( $widget_id === $widget['id'] ) {
-					$new_widgets[] = $widget;
+			foreach( $instances as $instance ) {
+				if ( $widget_id === $instance['id'] ) {
+					$new_widgets[] = $instance;
 					break;
 				}
 			}
@@ -247,28 +258,17 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	/**
 	 * Prepare a single widget output for response
 	 *
-	 * @param array $widget Widget instance
+	 * @param array $instance Widget instance
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response $data
 	 */
-	public function prepare_item_for_response( $widget, $request ) {
+	public function prepare_item_for_response( $instance, $request ) {
 
-		$id = $widget['id'];
-		$id_base = $widget['callback'][0]->id_base;
-		$array_key = $widget['params'][0]['number'];
+		$values = $instance['settings'];
+		$values['id'] = $instance['id'];
+		$values['type'] = $instance['id_base'];
 
-		$values = array(
-			'id' => $id,
-			'type' => $id_base,
-		);
-		if ( !empty( $array_key ) ) {
-			$widgets = get_option( 'widget_' . $id_base );
-			if ( isset( $widgets[$array_key] ) ) {
-				$values = array_merge( $values, $widgets[$array_key] );
-			}
-		}
-
-		$schema = $this->get_type_schema( $widget['callback'][0]->id_base );
+		$schema = $this->get_type_schema( $instance['id_base'] );
 
 		$data = array();
 		foreach( $schema['properties'] as $property_id => $property ) {
@@ -294,7 +294,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		 * @param array              $widget     Widget instance.
 		 * @param WP_REST_Request    $request    Request object.
 		 */
-		return apply_filters( 'rest_prepare_widget', $response, $widget, $request );
+		return apply_filters( 'rest_prepare_widget', $response, $instance, $request );
 	}
 
 	public function get_item_schema() {

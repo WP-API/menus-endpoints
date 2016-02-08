@@ -139,9 +139,9 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 
-		foreach( $this->widgets as $widget ) {
+		foreach ( $this->widgets as $widget ) {
 			$settings = $widget->get_settings();
-			foreach( $settings as $key => $values ) {
+			foreach ( $settings as $key => $values ) {
 				$this->instances[] = array(
 					'id' => $widget->id_base . '-' . $key,
 					'array_index' => $key,
@@ -161,18 +161,18 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		// TODO pagination
 
 		$instances = array();
-		foreach( $this->instances as $instance ) {
-			if ( !$this->get_instance_permissions_check( $instance['id'] ) ) {
+		foreach ( $this->instances as $instance ) {
+			if ( ! $this->get_instance_permissions_check( $instance['id'] ) ) {
 				continue;
 			}
-			if ( !is_null( $args['sidebar'] ) && $args['sidebar'] !== $this->get_instance_sidebar( $instance['id'] ) ) {
+			if ( ! is_null( $args['sidebar'] ) && $args['sidebar'] !== $this->get_instance_sidebar( $instance['id'] ) ) {
 				continue;
 			}
 			$data = $this->prepare_item_for_response( $instance, $request );
 			$instances[] = $this->prepare_response_for_collection( $data );
 		}
 
-		if ( !empty( $instances ) && !is_null( $args['sidebar'] ) ) {
+		if ( ! empty( $instances ) && ! is_null( $args['sidebar'] ) ) {
 			$instances = $this->sort_widgets_by_sidebar_order( $args['sidebar'], $instances );
 		}
 
@@ -192,7 +192,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	public function get_instance_permissions_check( $instance_id ) {
 		// Require `edit_theme_options` to view unassigned widgets
 		$sidebar = $this->get_instance_sidebar( $instance_id );
-		if ( $sidebar === false || $sidebar == 'wp_inactive_widgets' ) {
+		if ( false === $sidebar || 'wp_inactive_widgets' == $sidebar ) {
 			return current_user_can( 'edit_theme_options' );
 		}
 
@@ -207,7 +207,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 *  return `wp_inactive_widgets` as sidebar for unassigned widgets
 	 */
 	public function get_instance_sidebar( $id ) {
-		foreach( $this->sidebars as $sidebar_id => $widgets ) {
+		foreach ( $this->sidebars as $sidebar_id => $widgets ) {
 			if ( in_array( $id, $widgets ) ) {
 				return $sidebar_id;
 			}
@@ -226,13 +226,13 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 * @return array
 	 */
 	public function sort_widgets_by_sidebar_order( $sidebar, $instances ) {
-		if ( empty( $this->sidebars[$sidebar] ) ) {
+		if ( empty( $this->sidebars[ $sidebar ] ) ) {
 			return array();
 		}
 
 		$new_widgets = array();
-		foreach( $this->sidebars[$sidebar] as $widget_id ) {
-			foreach( $instances as $instance ) {
+		foreach ( $this->sidebars[ $sidebar ] as $widget_id ) {
+			foreach ( $instances as $instance ) {
 				if ( $widget_id === $instance['id'] ) {
 					$new_widgets[] = $instance;
 					break;
@@ -243,8 +243,56 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		return $new_widgets;
 	}
 
+	/**
+	 * Retrieves the specified widget in the request.
+	 *
+	 * @param  WP_REST_Request $request Request body.
+	 * @return WP_Error|WP_REST_Response
+	 */
 	public function get_item( $request ) {
+		foreach ( $this->widgets as $widget ) {
+			if ( $request['id_base'] === $widget->id_base ) {
+				$the_widget = $widget;
+				break;
+			}
+		}
 
+		if ( isset( $the_widget ) ) {
+			$settings = $the_widget->get_settings();
+			foreach ( $settings as $key => $values ) {
+				if ( absint( $request['number'] ) === $key ) {
+					$this->instances[] = array(
+						'id'          => $the_widget->id_base . '-' . $key,
+						'array_index' => $key,
+						'id_base'     => $the_widget->id_base,
+						'settings'    => $values,
+					);
+				}
+			}
+
+			// Set up return data.
+			$instances = array();
+
+			// Loop through the requested widget instances. Should only be one in this case.
+			foreach ( $this->instances as $instance ) {
+				if ( ! $this->get_instance_permissions_check( $instance['id'] ) ) {
+					continue;
+				}
+				if ( ! is_null( $request['sidebar'] ) && $request['sidebar'] !== $this->get_instance_sidebar( $instance['id'] ) ) {
+					continue;
+				}
+				$data = $this->prepare_item_for_response( $instance, $request );
+				$instances = $this->prepare_response_for_collection( $data );
+			}
+
+			// Return the widget response.
+			return rest_ensure_response( $instances );
+		} else {
+			return new WP_Error( 'cant-get-widget', __( 'The widget you requested does not exist. Please modify your request and try again.', 'non-existant-text-domain' ), array( 'status' => 400 ) );
+		}
+
+		// If everything goes haywire.
+		return new WP_Error( 'cant-get-widget', __( 'An error occured while processing your request. Please try again.', 'non-existant-text-domain' ), array( 'status' => 500 ) );
 	}
 
 	public function delete_item_permission_check( $request ) {
@@ -264,22 +312,22 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	 */
 	public function prepare_item_for_response( $instance, $request ) {
 
-		$values = $instance['settings'];
-		$values['id'] = $instance['id'];
-		$values['type'] = $instance['id_base'];
+		$data['id']         = $instance['id'];
+		$data['type']       = $instance['id_base'];
+		$values['settings'] = $instance['settings'];
 
 		$schema = $this->get_type_schema( $instance['id_base'] );
 
-		$data = array();
-		foreach( $schema['properties'] as $property_id => $property ) {
+		foreach ( $schema['properties'] as $property_id => $property ) {
 
 			// TODO check for public visibility of property and run permissions
 			// check for private properties.
 
-			if ( isset( $values[$property_id] ) && gettype( $values[$property_id] ) === $property['type'] ) {
-				$data[$property_id] = $values[$property_id];
+			// Test instance properties against schema and add them to the resource output.
+			if ( isset( $values['settings'][ $property_id ] ) && gettype( $values['settings'][ $property_id ] ) === $property['type'] ) {
+				$data['settings'][ $property_id ] = $values['settings'][ $property_id ];
 			} elseif ( isset( $property['default'] ) ) {
-				$data[$property_id] = $property['default'];
+				$data['settings'][ $property_id ] = $property['default'];
 			}
 		}
 
@@ -359,7 +407,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 		$schema = $this->get_type_schema( $request['type'] );
 
-		if ( $schema === false ) {
+		if ( false === $schema ) {
 			return new WP_Error( 'rest_widget_type_not_found', __( 'Requested widget type was not found.' ), array( 'status' => 404 ) );
 		}
 

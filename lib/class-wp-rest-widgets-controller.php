@@ -302,7 +302,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	/**
 	 * Delete a single widget.
 	 *
-	 * @param  array $request Array from WP_REST_Request.
+	 * @param  WP_REST_Request $request Request body.
 	 * @return WP_REST_Response|WP_Error $data
 	 */
 	public function delete_item( $request ) {

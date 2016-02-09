@@ -134,7 +134,7 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 	/**
 	 * Get a collection of widgets
 	 *
-	 * @param  WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_items( $request ) {
@@ -295,81 +295,12 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 		return new WP_Error( 'cant-get-widget', __( 'An error occured while processing your request. Please try again.', 'non-existant-text-domain' ), array( 'status' => 500 ) );
 	}
 
-	public function delete_item_permissions_check( $request ) {
+	public function delete_item_permission_check( $request ) {
 		return true;
 	}
 
-	/**
-	 * Delete a single widget.
-	 *
-	 * @param  array $request Array from WP_REST_Request.
-	 * @return WP_REST_Response|WP_Error $data
-	 */
 	public function delete_item( $request ) {
-		if ( isset( $request['id_base'] ) && isset( $request['number'] ) ) {
-			$widget_id = $request['id_base'] . '-' . $request['number'];
 
-			// Attempt to find matching widget.
-			foreach ( $this->widgets as $widget ) {
-				if ( $request['id_base'] === $widget->id_base ) {
-					$the_widget = $widget;
-					break;
-				}
-			}
-
-			// If widget match is found. Remove widget instance from settings and sidebar.
-			if ( isset( $the_widget ) ) {
-				$sidebars_widgets = wp_get_sidebars_widgets();
-
-				foreach ( $sidebars_widgets as $sidebar_id => $sidebar ) {
-					if ( is_array( $sidebar ) && in_array( $widget_id, $sidebar ) ) {
-						$current_sidebar = $sidebar_id;
-						$position        = array_search( $widget_id, $sidebar );
-						break;
-					}
-				}
-
-				// If widget is in a sidebar remove it from the array and preserve array indices.
-				if ( isset( $current_sidebar ) && false !== $position ) {
-					$sidebar_length = count( $sidebars_widgets[ $current_sidebar ] ) - 1;
-					if ( 0 < $position && $sidebar_length > $position ) {
-						// If the position of the widget is not first or last.
-						$array_chunk = array_splice( $sidebars_widgets[ $current_sidebar ], $position );
-						array_shift( $array_chunk );
-						$sidebars_widgets[ $current_sidebar ] = array_merge( $sidebars_widgets[ $current_sidebar ], $array_chunk );
-					} elseif ( $sidebar_length === $position ) {
-						// If the widget is last in the array.
-						array_pop( $sidebars_widgets[ $current_sidebar ] );
-					} elseif ( 0 === $position ) {
-						// If widget is first in the array.
-						if ( is_array( $sidebars_widgets[ $current_sidebar ] ) ) {
-							// If there are multiple widgets in the array remove the first element.
-							array_shift( $sidebars_widgets[ $current_sidebar ] );
-						} else {
-							// If there is only one widget in the sidebar then set it back to an empty array.
-							$sidebars_widgets[ $current_sidebar ] = array();
-						}
-					}
-
-					// Save modified sidebars widgets.
-					wp_set_sidebars_widgets( $sidebars_widgets );
-				}
-
-				// Get widget settings.
-				$settings = $the_widget->get_settings();
-				// If widget instance is set we need to remove it.
-				if ( array_key_exists( $request['number'], $settings ) ) {
-					unset( $settings[ $request['number'] ] );
-					$the_widget->save_settings( $settings );
-					return new WP_REST_Response( $settings, 200 );
-				}
-			} else {
-				return new WP_Error( 'cant-delete-widget', __( 'The widget ID provided does not exist.', 'non-existant-text-domain' ), array( 'status' => 404 ) );
-			}
-		} else {
-			return new WP_Error( 'cant-delete-widget', __( 'Please specify a widget base and ID in your request.', 'non-existant-text-domain' ), array( 'status' => 400 ) );
-		}
-		return new WP_Error( 'cant-delete-widget', __( 'Something went wrong with your request. Please try again.', 'non-existant-text-domain' ), array( 'status' => 500 ) );
 	}
 
 	/**

@@ -25,15 +25,34 @@ function wp_api_nav_menus_widgets_init_controllers() {
 		require_once dirname( __FILE__ ) . '/lib/class-wp-rest-nav-menu-items-controller.php';
 	}
 
+	if ( ! class_exists( 'WP_REST_Nav_Menu_Locations_Controller' ) ) {
+		require_once dirname( __FILE__ ) . '/lib/class-wp-rest-nav-menu-locations-controller.php';
+	}
+
+	if ( ! class_exists( 'WP_REST_Nav_Menu_Settings_Controller' ) ) {
+		require_once dirname( __FILE__ ) . '/lib/class-wp-rest-nav-menu-settings-controller.php';
+	}
+
 	if ( ! class_exists( 'WP_REST_Widgets_Controller' ) ) {
 		require_once dirname( __FILE__ ) . '/lib/class-wp-rest-widgets-controller.php';
 	}
 
-	$nav_menu_controller = new WP_REST_Nav_Menus_Controller();
+	global $wp_taxonomies;
+	$wp_taxonomies['nav_menu']->show_in_rest          = true;
+	$wp_taxonomies['nav_menu']->rest_base             = 'menus';
+	$wp_taxonomies['nav_menu']->rest_controller_class = 'WP_REST_Nav_Menus_Controller';
+
+	$nav_menu_controller = new WP_REST_Nav_Menus_Controller( 'nav_menu' );
 	$nav_menu_controller->register_routes();
 
-	$nav_menu_item_controller = new WP_REST_Nav_Menu_Items_Controller();
+	$nav_menu_item_controller = new WP_REST_Nav_Menu_Items_Controller( 'nav_menu_item' );
 	$nav_menu_item_controller->register_routes();
+
+	$nav_menu_location_controller = new WP_REST_Nav_Menu_Locations_Controller();
+	$nav_menu_location_controller->register_routes();
+
+	$nav_menu_settings_controller = new WP_REST_Nav_Menu_Settings_Controller();
+	$nav_menu_settings_controller->register_routes();
 
 	/**
 	 * @type WP_Widget_Factory $wp_widget_factory
@@ -42,4 +61,16 @@ function wp_api_nav_menus_widgets_init_controllers() {
 
 	$widgets_controller = new WP_REST_Widgets_Controller( $wp_widget_factory->widgets );
 	$widgets_controller->register_routes();
+}
+
+add_filter( 'register_post_type_args', 'wp_api_nav_menus_widgets_post_type_args', 10, 2 );
+
+function wp_api_nav_menus_widgets_post_type_args( $args, $post_type ) {
+	if ( 'nav_menu_item' === $post_type ) {
+		$args['show_in_rest']    = true;
+		$args['rest_base']       = 'menu-items';
+		$args['rest_controller'] = 'WP_REST_Menu_Items_Controller';
+	}
+
+	return $args;
 }

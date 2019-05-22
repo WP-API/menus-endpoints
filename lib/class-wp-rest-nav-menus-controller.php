@@ -1,68 +1,49 @@
 <?php
+/**
+ * REST API: WP_REST_Nav_Menus_Controller class
+ *
+ * @package WordPress
+ * @subpackage REST_API
+ * @since 5.x
+ */
 
 /**
- * Manage Menus for a WordPress site
+ * Core controller used to access menus via the REST API.
+ *
+ * @since 5.x
+ *
+ * @see WP_REST_Posts_Controller
  */
-class WP_REST_Nav_Menus_Controller extends WP_REST_Controller {
+class WP_REST_Nav_Menus_Controller extends WP_REST_Terms_Controller {
 
-	public function __construct() {
-		$this->namespace = 'wp/v2';
-		$this->rest_base = 'nav-menus';
+	/**
+	 * Prepares links for the request.
+	 *
+	 * @since 5.x
+	 *
+	 * @param object $term Term object.
+	 * @return array Links for the given term.
+	 */
+	protected function prepare_links( $term ) {
+
+		$links = parent::prepare_links( $term );
+
+		// Let's make sure that menu items are embeddable for a menu collection.
+		if ( array_key_exists( 'https://api.w.org/post_type', $links ) ) {
+			$post_type_links = $links['https://api.w.org/post_type'];
+
+			foreach ( $post_type_links as $index => $post_type_link ) {
+				if ( ! array_key_exists( 'href', $post_type_link ) || strpos( $post_type_link['href'], '/menu-items?' ) === false ) {
+					continue;
+				}
+
+				$post_type_links[ $index ]['embeddable'] = true;
+			}
+
+			$links['https://api.w.org/post_type'] = $post_type_links;
+		}
+
+		return $links;
 	}
 
-	public function register_routes() {
-		// @todo
-
-		register_rest_route( $this->namespace, '/' . $this->rest_base, array(
-			array(
-				'methods'         => WP_REST_Server::READABLE,
-				'callback'        => array( $this, 'get_items' ),
-				'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				'args'            => $this->get_collection_params(),
-			),
-			'schema' => array( $this, 'get_public_item_schema' ),
-		) );
-
-	}
-
-	public function get_items_permissions_check( $request ) {
-
-		return true;
-	}
-
-	public function get_items( $request ) {
-
-		$nav_menu_items = array();
-		$response = rest_ensure_response( $nav_menu_items );
-		return $response;
-
-	}
-
-	public function get_item_permissions_check( $request ) {
-
-	}
-
-	public function get_item( $request ) {
-
-	}
-
-	public function delete_item_permission_check( $request ) {
-
-	}
-
-	public function delete_item( $request ) {
-
-	}
-
-	public function prepare_item_for_response( $item, $request ) {
-
-	}
-
-	public function get_item_schema() {
-
-	}
-
-	public function get_collection_params() {
-
-	}
 }

@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <phpunit
 	bootstrap="tests/bootstrap.php"
 	backupGlobals="false"
@@ -7,18 +8,9 @@
 	convertWarningsToExceptions="true"
 	>
 	<testsuites>
-		<!-- Default test suite to run all tests -->
 		<testsuite>
-			<directory prefix="test-" suffix=".php">tests</directory>
+			<directory prefix="test-" suffix=".php">./tests/</directory>
+			<exclude>./tests/test-sample.php</exclude>
 		</testsuite>
 	</testsuites>
-	<filter>
-		<blacklist>
-			<directory suffix=".php">.</directory>
-		</blacklist>
-		<whitelist>
-			<directory suffix=".php">./lib</directory>
-			<file>./plugin.php</file>
-		</whitelist>
-	</filter>
 </phpunit>

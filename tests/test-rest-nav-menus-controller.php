@@ -1,6 +1,6 @@
 <?php
 
-class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_TestCase {
+class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase {
 
 	public function test_register_routes() {
 	}

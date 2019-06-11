@@ -1,7 +1,15 @@
 <?php
+/**
+ * REST API: WP_REST_Menus_Controller class
+ *
+ * @package WordPress
+ * @subpackage REST_API
+ */
 
 /**
- * Class WP_REST_Menus_Controller
+ * Core class used to managed menu terms associated via the REST API.
+ *
+ * @see WP_REST_Controller
  */
 class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 
@@ -13,24 +21,24 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 * @return WP_Term|WP_Error Term object if ID is valid, WP_Error otherwise.
 	 */
 	protected function get_term( $id ) {
-		$error = new WP_Error( 'rest_term_invalid', __( 'Term does not exist.' ), array( 'status' => 404 ) );
+		$term = parent::get_term( $id );
 
-		$term     = parent::get_term( $id );
-		$nav_term = wp_get_nav_menu_object( $term );
-
-		if ( ! $nav_term ) {
-			return $error;
+		if ( is_wp_error( $term ) ) {
+			return $term;
 		}
 
-		return $term;
+		$nav_term = wp_get_nav_menu_object( $term );
+
+		return $nav_term;
 	}
 
-
 	/**
-	 * @param obj             $term
-	 * @param WP_REST_Request $request
+	 * Prepares a single term output for response.
 	 *
-	 * @return WP_REST_Response
+	 * @param obj             $term    Term object.
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response $response Response object.
 	 */
 	public function prepare_item_for_response( $term, $request ) {
 		$nav_menu = wp_get_nav_menu_object( $term );
@@ -39,9 +47,11 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	}
 
 	/**
-	 * @param WP_REST_Request $request
+	 * Prepares a single term for create or update.
 	 *
-	 * @return array|object
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return object $prepared_term Term object.
 	 */
 	public function prepare_item_for_database( $request ) {
 		$response = parent::prepare_item_for_database( $request );
@@ -68,7 +78,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 				return new WP_Error( 'rest_taxonomy_not_hierarchical', __( 'Cannot set parent term, taxonomy is not hierarchical.' ), array( 'status' => 400 ) );
 			}
 
-			$parent = get_term( (int) $request['parent'], $this->taxonomy );
+			$parent = wp_get_nav_menu_object( (int) $request['parent'] );
 
 			if ( ! $parent ) {
 				return new WP_Error( 'rest_term_invalid', __( 'Parent term does not exist.' ), array( 'status' => 400 ) );
@@ -84,7 +94,8 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			 * If we're going to inform the client that the term already exists,
 			 * give them the identifier for future use.
 			 */
-			if ( $term_id = $term->get_error_data( 'term_exists' ) ) {
+			$term_id = $term->get_error_data( 'term_exists' );
+			if ( $term_id ) {
 				$existing_term = get_term( $term_id, $this->taxonomy );
 				$term->add_data( $existing_term->term_id, 'term_exists' );
 				$term->add_data(
@@ -100,7 +111,6 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 
 		$term = get_term( $term, $this->taxonomy );
 
-
 		/**
 		 * Fires after a single term is created or updated via the REST API.
 		 *
@@ -109,9 +119,6 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		 * @param WP_Term         $term     Inserted or updated term object.
 		 * @param WP_REST_Request $request  Request object.
 		 * @param bool            $creating True when creating a term, false when updating.
-		 *
-		 * @since 4.7.0
-		 *
 		 */
 		do_action( "rest_insert_{$this->taxonomy}", $term, $request, true );
 
@@ -142,7 +149,6 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		 * @param bool            $creating True when creating a term, false when updating.
 		 *
 		 * @since 5.0.0
-		 *
 		 */
 		do_action( "rest_after_insert_{$this->taxonomy}", $term, $request, true );
 
@@ -275,13 +281,15 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	}
 
 	/**
-	 * @return array
+	 * Retrieves the term's schema, conforming to JSON Schema.
+	 *
+	 * @return array Item schema data.
 	 */
 	public function get_item_schema() {
 		$schema = parent::get_item_schema();
-		unset( $schema["properties"]["count"] );
-		unset( $schema["properties"]["link"] );
-		$schema["properties"]["taxonomy"] = array(
+		unset( $schema['properties']['count'] );
+		unset( $schema['properties']['link'] );
+		$schema['properties']['taxonomy'] = array(
 			'description' => __( 'Type attribution for the term.' ),
 			'type'        => 'string',
 			'enum'        => array_keys( get_taxonomies() ),
@@ -291,5 +299,4 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 
 		return $schema;
 	}
-
 }

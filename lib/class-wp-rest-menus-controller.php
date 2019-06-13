@@ -51,18 +51,18 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 *
-	 * @return object $prepared_term Term object.
+	 * @return array $prepared_term Term object.
 	 */
 	public function prepare_item_for_database( $request ) {
-		$response = parent::prepare_item_for_database( $request );
+		$prepared_term = parent::prepare_item_for_database( $request );
 
-		$response = (array) $response;
+		$prepared_term = (array) $prepared_term;
 		$schema   = $this->get_item_schema();
 		if ( isset( $request['name'] ) && ! empty( $schema['properties']['name'] ) ) {
 			$response['menu-name'] = $request['name'];
 		}
 
-		return $response;
+		return $prepared_term;
 	}
 
 	/**

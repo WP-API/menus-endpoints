@@ -2,7 +2,7 @@
 /**
  * REST API: WP_REST_Posts_Controller class
  *
- * @package WordPress
+ * @package    WordPress
  * @subpackage REST_API
  */
 
@@ -53,7 +53,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			return new WP_Error( 'rest_post_exists', __( 'Cannot create existing post.' ), array( 'status' => 400 ) );
 		}
 
-		$prepared_nav_item = $this->prepare_item_for_database( $request );
+		$prepared_nav_item = (array) $this->prepare_item_for_database( $request );
 
 		if ( is_wp_error( $prepared_nav_item ) ) {
 			return $prepared_nav_item;
@@ -167,7 +167,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$schema = $this->get_item_schema();
 
 		if ( ! empty( $schema['properties']['meta'] ) && isset( $request['meta'] ) ) {
-			$meta_update = $this->meta->update_value( $request['meta'], $post->ID );
+			$meta_update = $this->meta->update_value( $request['meta'], $nav_menu_item->ID );
 
 			if ( is_wp_error( $meta_update ) ) {
 				return $meta_update;
@@ -196,7 +196,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 *
-	 * @return stdClass|WP_Error Post object or WP_Error.
+	 * @return stdClass
 	 */
 	protected function prepare_item_for_database( $request ) {
 		$prepared_nav_item = array(
@@ -237,15 +237,23 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		foreach ( $mapping as $original => $api_request ) {
 			if ( ! empty( $schema['properties'][ $api_request ] ) && isset( $request[ $api_request ] ) ) {
-				if ( isset( $schema['properties'][ $api_request ]['type'] ) && 'integer' === $schema['properties'][ $api_request ]['type'] ) {
-					$prepared_nav_item[ $original ] = absint( $request[ $api_request ] );
-				} else {
-					$prepared_nav_item[ $original ] = $request[ $api_request ];
-				}
+				$prepared_nav_item[ $original ] = rest_sanitize_value_from_schema( $request[ $api_request ], $schema['properties'][ $api_request ] );
 			}
 		}
 
-		return $prepared_nav_item;
+		$prepared_nav_item = (object) $prepared_nav_item;
+
+		/**
+		 * Filters a post before it is inserted via the REST API.
+		 *
+		 * The dynamic portion of the hook name, `$this->post_type`, refers to the post type slug.
+		 *
+		 *
+		 * @param stdClass        $prepared_post An object representing a single post prepared
+		 *                                       for inserting or updating the database.
+		 * @param WP_REST_Request $request       Request object.
+		 */
+		return apply_filters( "rest_pre_insert_{$this->post_type}", $prepared_nav_item, $request );
 	}
 
 	/**
@@ -270,15 +278,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			add_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
 
 			$data['title'] = array(
-				'raw'      => $post->post_title,
-				'rendered' => get_the_title( $menu_item->ID ),
+				'raw'      => $menu_item->post_title,
+				'rendered' => $menu_item->title,
 			);
 
 			remove_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
-		}
-
-		if ( in_array( 'original_title', $fields, true ) ) {
-			$data['original_title'] = $this->get_original_title( $menu_item );
 		}
 
 		if ( in_array( 'status', $fields, true ) ) {
@@ -366,10 +370,75 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		 * The dynamic portion of the hook name, `$this->post_type`, refers to the post type slug.
 		 *
 		 * @param WP_REST_Response $response The response object.
-		 * @param object          $post     Post object.
+		 * @param object           $post     Post object.
 		 * @param WP_REST_Request  $request  Request object.
 		 */
 		return apply_filters( "rest_prepare_{$this->post_type}", $response, $post, $request );
+	}
+
+	/**
+	 * Prepares links for the request.
+	 *
+	 * @param object $menu_item Menu object.
+	 *
+	 * @return array Links for the given post.
+	 */
+	protected function prepare_links( $menu_item ) {
+		$links = parent::prepare_links( $menu_item );
+
+		if ( 'post_type' === $menu_item->type && ! empty( $menu_item->object_id ) ) {
+			$post_type_object = get_post_type_object( $menu_item->object );
+			if ( $post_type_object->show_in_rest ) {
+				$rest_base                           = ! empty( $post_type_object->rest_base ) ? $post_type_object->rest_base : $post_type_object->name;
+				$url                                 = rest_url( sprintf( 'wp/v2/%s/%d', $rest_base, $menu_item->object_id ) );
+				$links['https://api.w.org/object'][] = array(
+					'href'       => $url,
+					'post_type'  => $menu_item->type,
+					'embeddable' => true,
+				);
+			}
+		} elseif ( 'taxonomy' === $menu_item->type && ! empty( $menu_item->object_id ) ) {
+			$taxonomy_object = get_taxonomy( $menu_item->object );
+			if ( $taxonomy_object->show_in_rest ) {
+				$rest_base                           = ! empty( $taxonomy_object->rest_base ) ? $taxonomy_object->rest_base : $taxonomy_object->name;
+				$url                                 = rest_url( sprintf( 'wp/v2/%s/%d', $rest_base, $menu_item->object_id ) );
+				$links['https://api.w.org/object'][] = array(
+					'href'       => $url,
+					'taxonomy'   => $menu_item->type,
+					'embeddable' => true,
+				);
+			}
+
+		}
+
+		return $links;
+	}
+
+	/**
+	 * Retrieve Link Description Objects that should be added to the Schema for the posts collection.
+	 *
+	 * @since 4.9.8
+	 *
+	 * @return array
+	 */
+	protected function get_schema_links() {
+		$links   = parent::get_schema_links();
+		$href    = rest_url( "{$this->namespace}/{$this->rest_base}/{id}" );
+		$links[] = array(
+			'rel'          => 'https://api.w.org/object',
+			'title'        => __( 'Get linked object.' ),
+			'href'         => $href,
+			'targetSchema' => array(
+				'type'       => 'object',
+				'properties' => array(
+					'object' => array(
+						'type' => 'integer',
+					),
+				),
+			),
+		);
+
+		return $links;
 	}
 
 	/**
@@ -405,13 +474,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					'readonly'    => true,
 				),
 			),
-		);
-
-		$schema['properties']['original_title'] = array(
-			'description' => __( 'HTML title for the object, transformed for display.' ),
-			'type'        => 'string',
-			'context'     => array( 'view', 'embed' ),
-			'readonly'    => true,
 		);
 
 		$schema['properties']['id'] = array(
@@ -546,7 +608,13 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['meta'] = $this->meta->get_field_schema();
 
-		return $schema;
+		$schema_links = $this->get_schema_links();
+
+		if ( $schema_links ) {
+			$schema['links'] = $schema_links;
+		}
+
+		return $this->add_additional_fields_schema( $schema );
 	}
 
 	/**
@@ -597,6 +665,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	 *
 	 * @param array           $prepared_args Optional. Prepared WP_Query arguments. Default empty array.
 	 * @param WP_REST_Request $request       Optional. Full details about the request.
+	 *
 	 * @return array Items query arguments.
 	 */
 	protected function prepare_items_query( $prepared_args = array(), $request = null ) {
@@ -618,41 +687,5 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		return $query_args;
-	}
-
-	/**
-	 * Get original title.
-	 *
-	 * @param object $item Nav menu item.
-	 *
-	 * @return string The original title.
-	 */
-	protected function get_original_title( $item ) {
-		$original_title = '';
-		if ( 'post_type' === $item->type && ! empty( $item->object_id ) ) {
-			$original_object = get_post( $item->object_id );
-			if ( $original_object ) {
-				/** This filter is documented in wp-includes/post-template.php */
-				$original_title = apply_filters( 'the_title', $original_object->post_title, $original_object->ID );
-
-				if ( '' === $original_title ) {
-					/* translators: %d: ID of a post */
-					$original_title = sprintf( __( '#%d (no title)' ), $original_object->ID );
-				}
-			}
-		} elseif ( 'taxonomy' === $item->type && ! empty( $item->object_id ) ) {
-			$original_term_title = get_term_field( 'name', $item->object_id, $item->object, 'raw' );
-			if ( ! is_wp_error( $original_term_title ) ) {
-				$original_title = $original_term_title;
-			}
-		} elseif ( 'post_type_archive' === $item->type ) {
-			$original_object = get_post_type_object( $item->object );
-			if ( $original_object ) {
-				$original_title = $original_object->labels->archives;
-			}
-		}
-		$original_title = html_entity_decode( $original_title, ENT_QUOTES, get_bloginfo( 'charset' ) );
-
-		return $original_title;
 	}
 }

@@ -109,7 +109,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			return $term;
 		}
 
-		$term = get_term( $term, $this->taxonomy );
+		$term = $this->get_term( $term );
 
 		/**
 		 * Fires after a single term is created or updated via the REST API.
@@ -290,7 +290,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		unset( $schema['properties']['count'] );
 		unset( $schema['properties']['link'] );
 		unset( $schema['properties']['taxonomy'] );
-		
+
 		return $schema;
 	}
 }

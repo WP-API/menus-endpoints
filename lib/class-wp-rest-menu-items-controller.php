@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API: WP_REST_Posts_Controller class
+ * REST API: WP_REST_Menu_Items_Controller class
  *
  * @package    WordPress
  * @subpackage REST_API

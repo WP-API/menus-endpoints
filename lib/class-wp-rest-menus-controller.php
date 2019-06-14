@@ -289,14 +289,8 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$schema = parent::get_item_schema();
 		unset( $schema['properties']['count'] );
 		unset( $schema['properties']['link'] );
-		$schema['properties']['taxonomy'] = array(
-			'description' => __( 'Type attribution for the term.' ),
-			'type'        => 'string',
-			'enum'        => array_keys( get_taxonomies() ),
-			'context'     => array( 'embed', 'edit' ),
-			'readonly'    => true,
-		);
-
+		unset( $schema['properties']['taxonomy'] );
+		
 		return $schema;
 	}
 }

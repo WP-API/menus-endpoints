@@ -60,8 +60,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		$menu_id = (int) $request['menu_id'];
+		$id      = 0;
 
-		$nav_menu_item_id = wp_update_nav_menu_item( $menu_id, $request['id'], $prepared_nav_item );
+		$nav_menu_item_id = wp_update_nav_menu_item( $menu_id, $id, $prepared_nav_item );
 
 		if ( is_wp_error( $nav_menu_item_id ) ) {
 			if ( 'db_insert_error' === $nav_menu_item_id->get_error_code() ) {
@@ -74,6 +75,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		$nav_menu_item = $this->get_nav_menu_item( $nav_menu_item_id );
+		if ( is_wp_error( $nav_menu_item ) ) {
+			$nav_menu_item->add_data( array( 'status' => 404 ) );
+
+			return $nav_menu_item;
+		}
 
 		/**
 		 * Fires after a single nav menu item is created or updated via the REST API.
@@ -115,9 +121,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		 * @param WP_REST_Request $request       Request object.
 		 * @param bool            $creating      True when creating a post, false when updating.
 		 */
-		do_action( "rest_after_insert_{$this->post_type}", $nav_menu_item_id, $request, true );
+		do_action( "rest_after_insert_{$this->post_type}", $nav_menu_item, $request, true );
 
-		$response = $this->prepare_item_for_response( $nav_menu_item_id, $request );
+		$response = $this->prepare_item_for_response( $nav_menu_item, $request );
 		$response = rest_ensure_response( $response );
 
 		$response->set_status( 201 );
@@ -134,7 +140,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function update_item( $request ) {
-		$valid_check = $this->get_post( $request['id'] );
+		$valid_check = $this->get_nav_menu_item( $request['id'] );
 		if ( is_wp_error( $valid_check ) ) {
 			return $valid_check;
 		}
@@ -160,6 +166,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		$nav_menu_item = $this->get_nav_menu_item( $nav_menu_item_id );
+		if ( is_wp_error( $nav_menu_item ) ) {
+			$nav_menu_item->add_data( array( 'status' => 404 ) );
+
+			return $nav_menu_item;
+		}
 
 		/** This action is documented in wp-includes/rest-api/endpoints/class-wp-rest-posts-controller.php */
 		do_action( "rest_insert_{$this->post_type}", $nav_menu_item, $request, false );
@@ -223,7 +234,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'menu-item-parent-id'   => 'menu_item_parent',
 			'menu-item-position'    => 'menu_order',
 			'menu-item-type'        => 'type',
-			'menu-item-title'       => 'title',
 			'menu-item-url'         => 'url',
 			'menu-item-description' => 'description',
 			'menu-item-attr-title'  => 'attr_title',
@@ -240,6 +250,34 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				$prepared_nav_item[ $original ] = rest_sanitize_value_from_schema( $request[ $api_request ], $schema['properties'][ $api_request ] );
 			}
 		}
+
+		// Nav menu title.
+		if ( ! empty( $schema['properties']['title'] ) && isset( $request['title'] ) ) {
+			if ( is_string( $request['title'] ) ) {
+				$prepared_nav_item['menu-item-title'] = $request['title'];
+			} elseif ( ! empty( $request['title']['raw'] ) ) {
+				$prepared_nav_item['menu-item-title'] = $request['title']['raw'];
+			}
+		}
+
+		if ( ! $prepared_nav_item['menu-item-object'] && $prepared_nav_item['menu-item-object-id'] ) {
+			if ( 'taxonomy' === $prepared_nav_item['menu-item-type'] ) {
+				$original = get_term( (int) $prepared_nav_item['menu-item-object-id'] );
+				if ( empty( $original ) ) {
+					return new WP_Error( 'rest_term_invalid_id', __( 'Invalid term ID.' ), array( 'status' => 400 ) );
+				}
+				$prepared_nav_item['menu-item-object'] = get_term_field( 'taxonomy', $original );
+			} elseif ( 'post_type' === $prepared_nav_item['menu-item-type'] ) {
+				$original = get_post( (int) $prepared_nav_item['menu-item-object-id'] );
+				if ( empty( $original ) ) {
+					return new WP_Error( 'rest_post_invalid_id', __( 'Invalid post  ID.' ), array( 'status' => 400 ) );
+				}
+				$prepared_nav_item['menu-item-object'] = get_post_type( $original );
+			}
+		}
+
+		$prepared_nav_item['menu-item-classes'] = implode( ' ', array_map( 'sanitize_html_class', $prepared_nav_item['menu-item-classes'] ) );
+		$prepared_nav_item['menu-item-xfn']     = implode( ' ', array_map( 'sanitize_html_class', $prepared_nav_item['menu-item-xfn'] ) );
 
 		$prepared_nav_item = (object) $prepared_nav_item;
 
@@ -477,6 +515,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$schema['properties']['id'] = array(
 			'description' => __( 'Unique identifier for the object.' ),
 			'type'        => 'integer',
+			'default'     => 0,
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'readonly'    => true,
 		);
@@ -491,13 +530,14 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'Name of type.' ),
 			'type'        => 'string',
-			'context'     => array( 'view', 'edit', 'embed' ),
+			'context'     => array( 'view', 'embed' ),
 			'readonly'    => true,
 		);
 
 		$schema['properties']['type'] = array(
 			'description' => __( 'Type of menu item' ),
 			'type'        => 'string',
+			'enum'        => array( 'taxonomy', 'post_type', 'post_type_archive', 'custom' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
 		);
 
@@ -578,8 +618,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'The singular label used to describe this type of menu item.' ),
-			'context'     => array( 'view', 'edit' ),
+			'context'     => array( 'view' ),
 			'type'        => 'string',
+			'readonly'    => true,
 		);
 
 		$schema['properties']['url'] = array(

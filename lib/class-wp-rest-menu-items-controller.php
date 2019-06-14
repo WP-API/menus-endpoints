@@ -248,7 +248,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		 *
 		 * The dynamic portion of the hook name, `$this->post_type`, refers to the post type slug.
 		 *
-		 *
 		 * @param stdClass        $prepared_post An object representing a single post prepared
 		 *                                       for inserting or updating the database.
 		 * @param WP_REST_Request $request       Request object.
@@ -408,7 +407,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					'embeddable' => true,
 				);
 			}
-
 		}
 
 		return $links;

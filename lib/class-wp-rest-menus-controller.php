@@ -47,6 +47,31 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	}
 
 	/**
+	 * Prepares links for the request.
+	 *
+	 * @param object $term Term object.
+	 *
+	 * @return array Links for the given term.
+	 */
+	protected function prepare_links( $term ) {
+		$links = parent::prepare_links( $term );
+
+		$locations = get_nav_menu_locations();
+		$rest_base = 'menu-locations';
+		foreach ( $locations as $menu_name => $menu_id ) {
+			if ( $term->term_id === $menu_id ) {
+				$url                                   = rest_url( sprintf( 'wp/v2/%s/%s', $rest_base, $menu_name ) );
+				$links['https://api.w.org/location'][] = array(
+					'href'       => $url,
+					'embeddable' => true,
+				);
+			}
+		}
+
+		return $links;
+	}
+
+	/**
 	 * Prepares a single term for create or update.
 	 *
 	 * @param WP_REST_Request $request Request object.

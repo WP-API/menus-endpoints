@@ -15,8 +15,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 
 	/**
 	 * Constructor.
-	 *
-
 	 */
 	public function __construct() {
 		$this->namespace = 'wp/v2';
@@ -26,45 +24,50 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	/**
 	 * Registers the routes for the objects of the controller.
 	 *
-	 *
 	 * @see   register_rest_route()
 	 */
 	public function register_routes() {
-
-		register_rest_route( $this->namespace, '/' . $this->rest_base, array(
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_items' ),
-				'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				'args'                => $this->get_collection_params(),
-			),
-			'schema' => array( $this, 'get_public_item_schema' ),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => $this->get_collection_params(),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
 
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<location>[\w-])', array(
-			'args'   => array(
-				'location' => array(
-					'description' => __( 'An alphanumeric identifier for the menu location.' ),
-					'type'        => 'string',
-				),
-			),
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<location>[\w-])',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_item' ),
-				'permission_callback' => array( $this, 'get_item_permissions_check' ),
-				'args'                => array(
-					'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+				'args'   => array(
+					'location' => array(
+						'description' => __( 'An alphanumeric identifier for the menu location.' ),
+						'type'        => 'string',
+					),
 				),
-			),
-			'schema' => array( $this, 'get_public_item_schema' ),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+					),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
 	}
 
 	/**
 	 * Checks whether a given request has permission to read menu locations.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 *
 	 *
 	 * @return WP_Error|bool True if the request has read access, WP_Error object otherwise.
 	 */
@@ -89,7 +92,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 *
-	 *
 	 * @return WP_Error|WP_REST_Response Response object on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
@@ -112,7 +114,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 *
-	 *
 	 * @return WP_Error|bool True if the request has read access for the item, WP_Error object otherwise.
 	 */
 	public function get_item_permissions_check( $request ) {
@@ -127,7 +128,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 * Retrieves a specific menu location.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 *
 	 *
 	 * @return WP_Error|WP_REST_Response Response object on success, or WP_Error object on failure.
 	 */
@@ -152,11 +152,9 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 * @param stdClass        $location Post status data.
 	 * @param WP_REST_Request $request  Full details about the request.
 	 *
-	 *
 	 * @return WP_REST_Response Post status data.
 	 */
 	public function prepare_item_for_response( $location, $request ) {
-
 		$locations = get_nav_menu_locations();
 		$menu_id   = ( isset( $locations[ $location->name ] ) ) ? $locations[ $location->name ] : 0;
 		$data      = array(
@@ -182,15 +180,12 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 		 * @param WP_REST_Response $response The response object.
 		 * @param object           $location The original status object.
 		 * @param WP_REST_Request  $request  Request used to generate the response.
-		 *
-		 *
 		 */
 		return apply_filters( 'rest_prepare_menu_location', $response, $location, $request );
 	}
 
 	/**
 	 * Retrieves the menu location's schema, conforming to JSON Schema.
-	 *
 	 *
 	 * @return array Item schema data.
 	 */
@@ -227,7 +222,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	/**
 	 * Retrieves the query params for collections.
 	 *
-	 *
 	 * @return array Collection parameters.
 	 */
 	public function get_collection_params() {
@@ -240,7 +234,6 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 * Prepares links for the request.
 	 *
 	 * @param stdClass $location Menu location.
-	 *
 	 *
 	 * @return array Links for the given menu location.
 	 */

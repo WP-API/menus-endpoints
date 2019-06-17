@@ -40,9 +40,12 @@ function wp_api_nav_menus_widgets_init_controllers() {
 		require_once dirname( __FILE__ ) . '/lib/class-wp-rest-widgets-controller.php';
 	}
 
-	$nav_menu_location  = new WP_REST_Menu_Locations_Controller;
+	$nav_menu_location = new WP_REST_Menu_Locations_Controller();
 	$nav_menu_location->register_routes();
+
 	/**
+	 * Get global widget factory.
+	 *
 	 * @type WP_Widget_Factory $wp_widget_factory
 	 */
 	global $wp_widget_factory;

@@ -555,7 +555,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$schema['properties']['parent'] = array(
 			'description' => __( 'The ID for the parent of the object.' ),
 			'type'        => 'integer',
-			'context'     => array( 'view', 'edit' , 'embed'),
+			'context'     => array( 'view', 'edit', 'embed' ),
 		);
 
 		$schema['properties']['attr_title'] = array(
@@ -586,7 +586,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['menu_order'] = array(
 			'description' => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
-			'context'     => array( 'view', 'edit', 'embed'),
+			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'integer',
 		);
 		$schema['properties']['object']     = array(
@@ -608,7 +608,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'The singular label used to describe this type of menu item.' ),
-			'context'     => array( 'view' , 'embed'),
+			'context'     => array( 'view', 'embed' ),
 			'type'        => 'string',
 			'readonly'    => true,
 		);
@@ -617,7 +617,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'description' => __( 'The URL to which this menu item points .' ),
 			'type'        => 'string',
 			'format'      => 'uri',
-			'context'     => array( 'view', 'edit' , 'embed'),
+			'context'     => array( 'view', 'edit', 'embed' ),
 		);
 
 		$schema['properties']['xfn'] = array(

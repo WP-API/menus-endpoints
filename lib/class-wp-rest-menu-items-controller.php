@@ -58,11 +58,8 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		if ( is_wp_error( $prepared_nav_item ) ) {
 			return $prepared_nav_item;
 		}
-
-		$menu_id = (int) $request['menu_id'];
-		$id      = 0;
-
-		$nav_menu_item_id = wp_update_nav_menu_item( $menu_id, $id, $prepared_nav_item );
+		$prepared_nav_item = (array) $prepared_nav_item;
+		$nav_menu_item_id  = wp_update_nav_menu_item( $prepared_nav_item['menu-id'], $prepared_nav_item['menu-item-db-id'], $prepared_nav_item );
 
 		if ( is_wp_error( $nav_menu_item_id ) ) {
 			if ( 'db_insert_error' === $nav_menu_item_id->get_error_code() ) {
@@ -151,9 +148,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			return $prepared_nav_item;
 		}
 
-		$menu_id = (int) $request['menu_id'];
+		$prepared_nav_item = (array) $prepared_nav_item;
 
-		$nav_menu_item_id = wp_update_nav_menu_item( $menu_id, $request['id'], $prepared_nav_item );
+		$nav_menu_item_id = wp_update_nav_menu_item( $prepared_nav_item['menu-id'], $prepared_nav_item['menu-item-db-id'], $prepared_nav_item );
 
 		if ( is_wp_error( $nav_menu_item_id ) ) {
 			if ( 'db_update_error' === $nav_menu_item_id->get_error_code() ) {
@@ -210,25 +207,55 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	 * @return stdClass
 	 */
 	protected function prepare_item_for_database( $request ) {
-		$prepared_nav_item = array(
-			'menu-item-db-id'       => 0,
-			'menu-item-object-id'   => 0,
-			'menu-item-object'      => '',
-			'menu-item-parent-id'   => 0,
-			'menu-item-position'    => 0,
-			'menu-item-type'        => 'custom',
-			'menu-item-title'       => '',
-			'menu-item-url'         => '',
-			'menu-item-description' => '',
-			'menu-item-attr-title'  => '',
-			'menu-item-target'      => '',
-			'menu-item-classes'     => '',
-			'menu-item-xfn'         => '',
-			'menu-item-status'      => 'publish',
-		);
+		$menu_item_db_id = $request['id'];
+		$menu_item_obj   = $this->get_nav_menu_item( $menu_item_db_id );
+		// Need to persist the menu item data. See https://core.trac.wordpress.org/ticket/28138 .
+		if ( ! is_wp_error( $menu_item_obj ) ) {
+			// Correct the menu position if this was the first item. See https://core.trac.wordpress.org/ticket/28140 .
+			$position = ( 0 === $menu_item_obj->menu_order ) ? 1 : $menu_item_obj->menu_order;
+
+			$prepared_nav_item = array(
+				'menu-item-db-id'       => $menu_item_db_id,
+				'menu-item-object-id'   => $menu_item_obj->object_id,
+				'menu-item-object'      => $menu_item_obj->object,
+				'menu-item-parent-id'   => $menu_item_obj->menu_item_parent,
+				'menu-item-position'    => $position,
+				'menu-item-title'       => $menu_item_obj->title,
+				'menu-item-url'         => $menu_item_obj->url,
+				'menu-item-description' => $menu_item_obj->description,
+				'menu-item-attr-title'  => $menu_item_obj->attr_title,
+				'menu-item-target'      => $menu_item_obj->target,
+				'menu-item-classes'     => implode( ' ', $menu_item_obj->classes ), // stored in the database as array.
+				'menu-item-xfn'         => $menu_item_obj->xfn,
+				'menu-item-status'      => $menu_item_obj->post_status,
+			);
+			$menu_ids          = wp_get_post_terms( $menu_item_db_id, 'nav_menu', array( 'fields' => 'ids' ) );
+			if ( $menu_ids && ! is_wp_error( $menu_ids ) ) {
+				$prepared_nav_item['menu-id'] = array_shift( $menu_ids );
+			}
+		} else {
+			$prepared_nav_item = array(
+				'menu-id'               => 0,
+				'menu-item-db-id'       => 0,
+				'menu-item-object-id'   => 0,
+				'menu-item-object'      => '',
+				'menu-item-parent-id'   => 0,
+				'menu-item-position'    => 0,
+				'menu-item-type'        => 'custom',
+				'menu-item-title'       => '',
+				'menu-item-url'         => '',
+				'menu-item-description' => '',
+				'menu-item-attr-title'  => '',
+				'menu-item-target'      => '',
+				'menu-item-classes'     => '',
+				'menu-item-xfn'         => '',
+				'menu-item-status'      => 'publish',
+			);
+		}
 
 		$mapping = array(
-			'menu-item-db-id'       => 'db_id',
+			'menu-id'               => 'menu_id',
+			'menu-item-db-id'       => 'id',
 			'menu-item-object-id'   => 'object_id',
 			'menu-item-object'      => 'object',
 			'menu-item-parent-id'   => 'menu_item_parent',
@@ -574,12 +601,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'items'       => array(
 				'type' => 'string',
 			),
-		);
-
-		$schema['properties']['db_id'] = array(
-			'description' => __( 'The DB ID of this item as a nav_menu_item object, if it exists( 0 if it doesn\'t exist).' ),
-			'context'     => array( 'view', 'edit' ),
-			'type'        => 'integer',
 		);
 
 		$schema['properties']['description'] = array(

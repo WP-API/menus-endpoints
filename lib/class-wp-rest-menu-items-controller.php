@@ -256,7 +256,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'menu-item-db-id'       => 'id',
 			'menu-item-object-id'   => 'object_id',
 			'menu-item-object'      => 'object',
-			'menu-item-parent-id'   => 'menu_item_parent',
+			'menu-item-parent-id'   => 'parent',
 			'menu-item-position'    => 'menu_order',
 			'menu-item-type'        => 'type',
 			'menu-item-url'         => 'url',
@@ -461,11 +461,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'parent', $fields, true ) ) {
-			$data['parent'] = absint( $menu_item->post_parent ); // Same as post_parent, expose as integer.
-		}
-
-		if ( in_array( 'menu_item_parent', $fields, true ) ) {
-			$data['menu_item_parent'] = absint( $menu_item->menu_item_parent ); // Same as post_parent, expose as integer.
+			$data['parent'] = absint( $menu_item->menu_item_parent ); // Same as post_parent, expose as integer.
 		}
 
 		if ( in_array( 'menu_order', $fields, true ) ) {
@@ -698,14 +694,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'type'        => 'string',
 		);
 
-		$schema['properties']['menu_item_parent'] = array(
-			'description' => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
-			'type'        => 'integer',
-			'minimum'     => 0,
-			'default'     => 0,
-		);
-
 		$schema['properties']['menu_order'] = array(
 			'description' => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
@@ -735,7 +723,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'The singular label used to describe this type of menu item.' ),
-			'context'     => array( 'view' ),
+			'context'     => array( 'view', 'embed' ),
 			'type'        => 'string',
 			'readonly'    => true,
 		);

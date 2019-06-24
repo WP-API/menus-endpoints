@@ -252,7 +252,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		$mapping = array(
-			'menu-id'               => 'menu_id',
 			'menu-item-db-id'       => 'id',
 			'menu-item-object-id'   => 'object_id',
 			'menu-item-object'      => 'object',
@@ -274,6 +273,14 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			if ( ! empty( $schema['properties'][ $api_request ] ) && isset( $request[ $api_request ] ) ) {
 				$prepared_nav_item[ $original ] = rest_sanitize_value_from_schema( $request[ $api_request ], $schema['properties'][ $api_request ] );
 			}
+		}
+		$taxonomy = get_taxonomy('nav_menu');
+		$base = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
+		if ( isset( $request[ $base ] ) && ! empty( $request[ $base ] ) ) {
+			if ( count( $request[ $base ] ) > 1 ) {
+				return new WP_Error( 'rest_single_menu', __( 'Unable to test menu item to multiple menus.' ), array( 'status' => 400 ) );
+			}
+			$prepared_nav_item['menu-id'] = array_shift( $request[ $base ] );
 		}
 
 		// Nav menu title.
@@ -344,16 +351,16 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			}
 		}
 
-		foreach ( array( 'object_id', 'menu_item_parent', 'nav_menu_term_id' ) as $key ) {
+		foreach ( array( 'menu-item-object-id', 'menu-item-parent-id' ) as $key ) {
 			// Note we need to allow negative-integer IDs for previewed objects not inserted yet.
 			$prepared_nav_item[ $key ] = intval( $prepared_nav_item[ $key ] );
 		}
 
-		foreach ( array( 'type', 'object', 'target' ) as $key ) {
+		foreach ( array( 'menu-item-type', 'menu-item-object', 'menu-item-target' ) as $key ) {
 			$prepared_nav_item[ $key ] = sanitize_key( $prepared_nav_item[ $key ] );
 		}
 
-		foreach ( array( 'xfn', 'classes' ) as $key ) {
+		foreach ( array( 'menu-item-xfn', 'menu-item-classes' ) as $key ) {
 			$value = $prepared_nav_item[ $key ];
 			if ( ! is_array( $value ) ) {
 				$value = explode( ' ', $value );
@@ -361,30 +368,27 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			$prepared_nav_item[ $key ] = implode( ' ', array_map( 'sanitize_html_class', $value ) );
 		}
 
-		$prepared_nav_item['original_title'] = sanitize_text_field( $prepared_nav_item['original_title'] );
 
 		// Apply the same filters as when calling wp_insert_post().
 
 		/** This filter is documented in wp-includes/post.php */
-		$prepared_nav_item['title'] = wp_unslash( apply_filters( 'title_save_pre', wp_slash( $prepared_nav_item['title'] ) ) );
+		$prepared_nav_item['menu-item-title'] = wp_unslash( apply_filters( 'title_save_pre', wp_slash( $prepared_nav_item['menu-item-title'] ) ) );
 
 		/** This filter is documented in wp-includes/post.php */
-		$prepared_nav_item['attr_title'] = wp_unslash( apply_filters( 'excerpt_save_pre', wp_slash( $prepared_nav_item['attr_title'] ) ) );
+		$prepared_nav_item['menu-item-attr-title'] = wp_unslash( apply_filters( 'excerpt_save_pre', wp_slash( $prepared_nav_item['menu-item-attr-title'] ) ) );
 
 		/** This filter is documented in wp-includes/post.php */
-		$prepared_nav_item['description'] = wp_unslash( apply_filters( 'content_save_pre', wp_slash( $prepared_nav_item['description'] ) ) );
+		$prepared_nav_item['menu-item-description'] = wp_unslash( apply_filters( 'content_save_pre', wp_slash( $prepared_nav_item['menu-item-description'] ) ) );
 
-		if ( '' !== $prepared_nav_item['url'] ) {
-			$prepared_nav_item['url'] = esc_url_raw( $prepared_nav_item['url'] );
-			if ( '' === $prepared_nav_item['url'] ) {
+		if ( '' !== $prepared_nav_item['menu-item-url'] ) {
+			$prepared_nav_item['menu-item-url'] = esc_url_raw( $prepared_nav_item['menu-item-url'] );
+			if ( '' === $prepared_nav_item['menu-item-url'] ) {
 				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) ); // Fail sanitization if URL is invalid.
 			}
 		}
-		if ( 'publish' !== $prepared_nav_item['status'] ) {
-			$prepared_nav_item['status'] = 'draft';
+		if ( 'publish' !== $prepared_nav_item['menu-item-status'] ) {
+			$prepared_nav_item['menu-item-status'] = 'draft';
 		}
-
-		$prepared_nav_item['_invalid'] = (bool) $prepared_nav_item['_invalid'];
 
 		$prepared_nav_item = (object) $prepared_nav_item;
 
@@ -486,6 +490,17 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		if ( in_array( 'meta', $fields, true ) ) {
 			$data['meta'] = $this->meta->get_value( $menu_item->ID, $request );
+		}
+
+		$taxonomies = wp_list_filter( get_object_taxonomies( $this->post_type, 'objects' ), array( 'show_in_rest' => true ) );
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$base = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
+
+			if ( in_array( $base, $fields, true ) ) {
+				$terms         = get_the_terms( $post, $taxonomy->name );
+				$data[ $base ] = $terms ? array_values( wp_list_pluck( $terms, 'term_id' ) ) : array();
+			}
 		}
 
 		$context = ! empty( $request['context'] ) ? $request['context'] : 'view';
@@ -626,14 +641,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'readonly'    => true,
 		);
 
-		$schema['properties']['menu_id'] = array(
-			'description' => __( 'Unique identifier for the menu.' ),
-			'type'        => 'integer',
-			'minimum'     => 0,
-			'context'     => array( 'edit' ),
-			'default'     => 0,
-		);
-
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'Name of type.' ),
 			'type'        => 'string',
@@ -766,6 +773,22 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'type'        => 'boolean',
 			'readonly'    => true,
 		);
+
+
+		$taxonomies = wp_list_filter( get_object_taxonomies( $this->post_type, 'objects' ), array( 'show_in_rest' => true ) );
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$base                          = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
+			$schema['properties'][ $base ] = array(
+				/* translators: %s: taxonomy name */
+				'description' => sprintf( __( 'The terms assigned to the object in the %s taxonomy.' ), $taxonomy->name ),
+				'type'        => 'array',
+				'items'       => array(
+					'type' => 'integer',
+				),
+				'context'     => array( 'view', 'edit' ),
+			);
+		}
 
 		$schema['properties']['meta'] = $this->meta->get_field_schema();
 

@@ -642,11 +642,14 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['type'] = array(
-			'description' => __( 'Type of menu item' ),
+			'description' => __( 'The family of objects originally represented, such as "post_type" or "taxonomy".' ),
 			'type'        => 'string',
 			'enum'        => array( 'taxonomy', 'post_type', 'post_type_archive', 'custom' ),
-			'default'     => 'custom',
 			'context'     => array( 'view', 'edit', 'embed' ),
+			'default'     => 'custom',
+			'arg_options' => array(
+				'sanitize_callback' => 'sanitize_key',
+			),
 		);
 
 		$schema['properties']['status'] = array(
@@ -655,14 +658,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'enum'        => array_keys( get_post_stati( array( 'internal' => false ) ) ),
 			'default'     => 'publish',
 			'context'     => array( 'view', 'edit', 'embed' ),
-		);
-
-		$schema['properties']['link'] = array(
-			'description' => __( 'URL to the object.' ),
-			'type'        => 'string',
-			'format'      => 'uri',
-			'context'     => array( 'view', 'edit', 'embed' ),
-			'readonly'    => true,
 		);
 
 		$schema['properties']['parent'] = array(
@@ -674,24 +669,35 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['attr_title'] = array(
-			'description' => __( 'The title attribute of the link element for this menu item .' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
+			'description' => __( 'Text for the title attribute of the link element for this menu item.' ),
 			'type'        => 'string',
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'arg_options' => array(
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 
 		$schema['properties']['classes'] = array(
-			'description' => __( 'The array of class attribute values for the link element of this menu item .' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
+			'description' => __( 'Class names for the link element of this menu item.' ),
 			'type'        => 'array',
 			'items'       => array(
 				'type' => 'string',
+			),
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'arg_options' => array(
+				'sanitize_callback' => function ( $value ) {
+					return array_map( 'sanitize_html_class', explode( ' ', $value ) );
+				},
 			),
 		);
 
 		$schema['properties']['description'] = array(
 			'description' => __( 'The description of this menu item.' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'string',
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'arg_options' => array(
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 
 		$schema['properties']['menu_order'] = array(
@@ -716,9 +722,13 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['target'] = array(
-			'description' => __( 'The target attribute of the link element for this menu item . The family of objects originally represented, such as "post_type" or "taxonomy."' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
+			'description' => __( 'The target attribute of the link element for this menu item.' ),
 			'type'        => 'string',
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'enum'        => array(
+				'_blank',
+				'',
+			),
 		);
 
 		$schema['properties']['type_label'] = array(
@@ -729,20 +739,26 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['url'] = array(
-			'description' => __( 'The URL to which this menu item points .' ),
+			'description' => __( 'The URL to which this menu item points.' ),
 			'type'        => 'string',
 			'format'      => 'uri',
 			'context'     => array( 'view', 'edit', 'embed' ),
+			'arg_options' => array(
+				'sanitize_callback' => 'esc_url_raw',
+			),
 		);
 
 		$schema['properties']['xfn'] = array(
-			'description' => __( 'The XFN relationship expressed in the link of this menu item . ' ),
+			'description' => __( 'The XFN relationship expressed in the link of this menu item.' ),
+			'type'        => 'string',
 			'context'     => array( 'view', 'edit', 'embed' ),
-			'type'        => 'array',
-			'items'       => array(
-				'type' => 'string',
+			'arg_options' => array(
+				'sanitize_callback' => function ( $value ) {
+					return implode( ' ', array_map( 'sanitize_html_class', explode( ' ', $value ) ) );
+				},
 			),
 		);
+
 
 		$schema['properties']['_invalid'] = array(
 			'description' => __( '      Whether the menu item represents an object that no longer exists .' ),

@@ -425,6 +425,10 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 
 		$core_widget_schemas = array(
 			'archives'        => array(
+				'title'    => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'count'    => array(
 					'type'    => 'boolean',
 					'default' => false,
@@ -434,9 +438,18 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 					'default' => false,
 				),
 			),
-			'calendar'        => array(),
+			'calendar'        => array(
+				'title'    => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
 			'categories'      => array(
-				'count'        => array(
+				'title'    => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'count'    => array(
 					'type'    => 'boolean',
 					'default' => false,
 				),
@@ -449,8 +462,208 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 					'default' => false,
 				),
 			),
-			'meta'            => array(),
+			'custom_html'     => array(
+				'title'   => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'content' => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
+			'links'           => array(
+				'images'    => array(
+					'type'    => 'boolean',
+					'default' => true,
+				),
+				'name'        => array(
+					'type'    => 'boolean',
+					'default' => true,
+				),
+				'description'        => array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
+				'rating'        => array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
+				'category'        => array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
+				'orderby'        => array(
+					'type'    => 'string',
+					'default' => 'name',
+				),
+				'limit'        => array(
+					'type'    => 'integer',
+					'default' => -1,
+				),
+			),
+			'media_audio'   => array(
+				'attachment_id' => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'url'           => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'title'       	=> array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'preload'     	=> array(
+					'type'    => 'string',
+					'default' => 'none',
+				),
+				'loop'        	=> array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
+			),
+			'media_gallery'     => array(
+				'attachment_id' => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'url'        	=> array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'title'        	=> array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'ids'        	=> array(
+					'type'    => 'array',
+					'items'   => array(
+						'type' 	=> 'integer',
+					),
+					'default' => array(),
+				),
+				'columns'     	=> array(
+					'type'    => 'integer',
+					'default' => 3,
+				),
+				'size'			=> array (
+					'type'	  => 'string',
+					'default' => 'thumbnail'
+				),
+				'link_type'     => array(
+					'type'    => 'string',
+					'default' => 'post',
+		        ),
+	            'orderby_random'=> array(
+					'type'    => 'boolean',
+			        'default' => false,
+				),
+			),
+			'media_image'     => array(
+				'attachment_id'      => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'url'        	     => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'title'        	     => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'size'			     => array (
+					'type'	  => 'string',
+					'default' => 'medium'
+				),
+				'width'              => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'height'             => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'caption'            => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'alt'                => array(
+					'type'    => 'string',
+					'default' => '',
+		        ),
+				'link_type'          => array(
+					'type'    => 'string',
+					'default' => 'custom',
+				),
+				'link_url'           => array(
+					'type'    => 'string',
+					'default' => '',
+		        ),
+	            'image_classes'      => array(
+					'type'    => 'string',
+			        'default' => '',
+				),
+				'link_classes'       => array(
+					'type'    => 'string',
+			        'default' => '',
+				),
+				'link_rel'           => array(
+					'type'    => 'string',
+			        'default' => '',
+				),
+				'link_target_blank'  => array(
+					'type'    => 'string',
+			        'default' => '',
+				),
+				'image_title'        => array(
+					'type'    => 'string',
+			        'default' => '',
+				),
+			),
+			'media_video'   => array(
+				'attachment_id' => array(
+					'type'    => 'integer',
+					'default' => 0,
+				),
+				'url'           => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'title'       	=> array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'preload'     	=> array(
+					'type'    => 'string',
+					'default' => 'none',
+				),
+				'loop'        	=> array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
+				'content'       => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
+			'meta'            => array(
+				'title'	  => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
 			'nav_menu'        => array(
+				'title'	  => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'nav_menu' => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'sortby'  => array(
 					'type'    => 'string',
 					'default' => 'post_title',
@@ -461,6 +674,10 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				),
 			),
 			'pages'           => array(
+				'title'	  => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'sortby'  => array(
 					'type'    => 'string',
 					'default' => 'post_title',
@@ -471,12 +688,20 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				),
 			),
 			'recent-comments' => array(
+				'title'	 => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'number' => array(
 					'type'    => 'integer',
 					'default' => 5,
 				),
 			),
 			'recent-posts'    => array(
+				'title'	    => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'number'    => array(
 					'type'    => 'integer',
 					'default' => 5,
@@ -487,6 +712,10 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 				),
 			),
 			'rss'             => array(
+				'title'	       => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'url'          => array(
 					'type'    => 'string',
 					'default' => '',
@@ -516,14 +745,27 @@ class WP_REST_Widgets_Controller extends WP_REST_Controller {
 					'default' => false,
 				),
 			),
-			'search'          => array(),
+			'search'          => array(
+				'title'	   => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+			),
 			'tag_cloud'       => array(
+				'title'	  => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'taxonomy' => array(
 					'type'    => 'string',
 					'default' => 'post_tag',
 				),
 			),
 			'text'            => array(
+				'title'	 => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 				'text'   => array(
 					'type'    => 'string',
 					'default' => '',

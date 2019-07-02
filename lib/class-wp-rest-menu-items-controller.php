@@ -309,12 +309,15 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					return new WP_Error( 'rest_post_invalid_id', __( 'Invalid post  ID.' ), array( 'status' => 400 ) );
 				}
 				$prepared_nav_item['menu-item-object'] = get_post_type( $original );
-			} elseif ( 'post_type_archive' === $prepared_nav_item['menu-item-type'] ) { // If post type archive, check if post type exists.
-				$post_type = ( $prepared_nav_item['menu-item-object'] ) ? $prepared_nav_item['menu-item-object'] : false;
-				$original  = get_post_type_object( $post_type );
-				if ( empty( $original ) ) {
-					return new WP_Error( 'rest_post_invalid_type', __( 'Invalid post type.' ), array( 'status' => 400 ) );
-				}
+			}
+		}
+
+		// If post type archive, check if post type exists.
+		if ( 'post_type_archive' === $prepared_nav_item['menu-item-type'] ) {
+			$post_type = ( $prepared_nav_item['menu-item-object'] ) ? $prepared_nav_item['menu-item-object'] : false;
+			$original  = get_post_type_object( $post_type );
+			if ( empty( $original ) ) {
+				return new WP_Error( 'rest_post_invalid_type', __( 'Invalid post type.' ), array( 'status' => 400 ) );
 			}
 		}
 

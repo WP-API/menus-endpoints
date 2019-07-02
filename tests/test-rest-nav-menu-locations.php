@@ -58,7 +58,10 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 		$data = $response->get_data();
 		$this->assertCount( 2, $data );
 		$names = wp_list_pluck( $data, 'name' );
+		$descriptions = wp_list_pluck( $data, 'description' );
 		$this->assertEquals( $menus, $names );
+		$menu_descriptions = array_map('ucfirst', $names);
+		$this->assertEquals( $menu_descriptions, $descriptions );
 	}
 
 	public function test_get_item() {

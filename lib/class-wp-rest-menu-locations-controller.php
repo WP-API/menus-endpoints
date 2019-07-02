@@ -43,7 +43,7 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<location>[\w-])',
+			'/' . $this->rest_base . '/(?P<location>[\w-]+)',
 			array(
 				'args'   => array(
 					'location' => array(

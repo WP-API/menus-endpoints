@@ -29,8 +29,8 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 		$routes = rest_get_server()->get_routes();
 		$this->assertArrayHasKey( '/wp/v2/menu-locations', $routes );
 		$this->assertCount( 1, $routes['/wp/v2/menu-locations'] );
-		$this->assertArrayHasKey( '/wp/v2/menu-locations/(?P<location>[\w-])', $routes );
-		$this->assertCount( 1, $routes['/wp/v2/menu-locations/(?P<location>[\w-])'] );
+		$this->assertArrayHasKey( '/wp/v2/menu-locations/(?P<location>[\w-]+)', $routes );
+		$this->assertCount( 1, $routes['/wp/v2/menu-locations/(?P<location>[\w-]+)'] );
 	}
 
 	public function test_context_param() {
@@ -56,6 +56,7 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-locations' );
 		$response = rest_get_server()->dispatch( $request );
 		$data = $response->get_data();
+		$data = array_values($data);
 		$this->assertCount( 2, $data );
 		$names = wp_list_pluck( $data, 'name' );
 		$descriptions = wp_list_pluck( $data, 'description' );

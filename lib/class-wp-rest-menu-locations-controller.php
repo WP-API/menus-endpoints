@@ -75,6 +75,7 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you are not allowed to view menu locations.' ), array( 'status' => rest_authorization_required_code() ) );
 		}
+
 		return true;
 	}
 
@@ -114,6 +115,7 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 		if ( ! array_key_exists( $request['location'], get_registered_nav_menus() ) ) {
 			return new WP_Error( 'rest_menu_location_invalid', __( 'Invalid menu location.' ), array( 'status' => 404 ) );
 		}
+
 		return true;
 	}
 
@@ -149,11 +151,11 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 */
 	public function prepare_item_for_response( $location, $request ) {
 		$locations = get_nav_menu_locations();
-		$menu_id   = ( isset( $locations[ $location->name ] ) ) ? $locations[ $location->name ] : 0;
+		$menu      = ( isset( $locations[ $location->name ] ) ) ? $locations[ $location->name ] : 0;
 		$data      = array(
 			'name'        => $location->name,
 			'description' => $location->description,
-			'menu_id'     => $menu_id,
+			'menu'        => $menu,
 		);
 
 		$context = ! empty( $request['context'] ) ? $request['context'] : 'view';
@@ -200,8 +202,8 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 					'context'     => array( 'embed', 'view', 'edit' ),
 					'readonly'    => true,
 				),
-				'menu_id'     => array(
-					'description' => __( 'The id of menu.' ),
+				'menu'        => array(
+					'description' => __( 'The ID of the assigned menu.' ),
 					'type'        => 'integer',
 					'context'     => array( 'embed', 'view', 'edit' ),
 					'readonly'    => true,
@@ -244,12 +246,12 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 		);
 
 		$locations = get_nav_menu_locations();
-		$menu_id   = ( isset( $locations[ $location->name ] ) ) ? $locations[ $location->name ] : 0;
-		if ( $menu_id ) {
+		$menu      = ( isset( $locations[ $location->name ] ) ) ? $locations[ $location->name ] : 0;
+		if ( $menu ) {
 			$taxonomy_object = get_taxonomy( 'nav_menu' );
 			if ( $taxonomy_object->show_in_rest ) {
 				$rest_base                         = ! empty( $taxonomy_object->rest_base ) ? $taxonomy_object->rest_base : $taxonomy_object->name;
-				$url                               = rest_url( sprintf( 'wp/v2/%s/%d', $rest_base, $menu_id ) );
+				$url                               = rest_url( sprintf( 'wp/v2/%s/%d', $rest_base, $menu ) );
 				$links['https://api.w.org/menu'][] = array(
 					'href'       => $url,
 					'embeddable' => true,

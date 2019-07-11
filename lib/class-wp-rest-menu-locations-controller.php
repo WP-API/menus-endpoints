@@ -72,18 +72,9 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 * @return WP_Error|bool True if the request has read access, WP_Error object otherwise.
 	 */
 	public function get_items_permissions_check( $request ) {
-		if ( 'edit' === $request['context'] ) {
-			$types = get_post_types( array( 'show_in_rest' => true ), 'objects' );
-
-			foreach ( $types as $type ) {
-				if ( current_user_can( $type->cap->edit_posts ) ) {
-					return true;
-				}
-			}
-
-			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you are not allowed to manage menu locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you are not allowed to view menu locations.' ), array( 'status' => rest_authorization_required_code() ) );
 		}
-
 		return true;
 	}
 
@@ -117,10 +108,12 @@ class WP_REST_Menu_Locations_Controller extends WP_REST_Controller {
 	 * @return WP_Error|bool True if the request has read access for the item, WP_Error object otherwise.
 	 */
 	public function get_item_permissions_check( $request ) {
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you are not allowed to view menu locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		}
 		if ( ! array_key_exists( $request['location'], get_registered_nav_menus() ) ) {
 			return new WP_Error( 'rest_menu_location_invalid', __( 'Invalid menu location.' ), array( 'status' => 404 ) );
 		}
-
 		return true;
 	}
 

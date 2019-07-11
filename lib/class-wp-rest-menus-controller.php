@@ -2,7 +2,7 @@
 /**
  * REST API: WP_REST_Menus_Controller class
  *
- * @package WordPress
+ * @package    WordPress
  * @subpackage REST_API
  */
 
@@ -36,11 +36,13 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 * Checks if a request has access to create a term.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
+	 *
 	 * @return bool|WP_Error True if the request has access to create items, false or WP_Error object otherwise.
 	 */
 	public function create_item_permissions_check( $request ) {
-		if ( ! $this->check_assign_locations_permission( $request ) ) {
-			return new WP_Error( 'rest_cannot_assign_location', __( 'Sorry, you are not allowed to assign the provided locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		$check = $this->check_assign_locations_permission( $request );
+		if ( is_wp_error( $check ) ) {
+			return $check;
 		}
 
 		return parent::create_item_permissions_check( $request );
@@ -50,11 +52,13 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 * Checks if a request has access to update the specified term.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
+	 *
 	 * @return bool|WP_Error True if the request has access to update the item, false or WP_Error object otherwise.
 	 */
 	public function update_item_permissions_check( $request ) {
-		if ( ! $this->check_assign_locations_permission( $request ) ) {
-			return new WP_Error( 'rest_cannot_assign_location', __( 'Sorry, you are not allowed to assign the provided locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		$check = $this->check_assign_locations_permission( $request );
+		if ( is_wp_error( $check ) ) {
+			return $check;
 		}
 
 		return parent::update_item_permissions_check( $request );
@@ -64,6 +68,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 * Checks whether current user can assign all locations sent with the current request.
 	 *
 	 * @param WP_REST_Request $request The request object with post and locations data.
+	 *
 	 * @return bool Whether the current user can assign the provided terms.
 	 */
 	protected function check_assign_locations_permission( $request ) {
@@ -71,7 +76,24 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			return true;
 		}
 
-		return current_user_can( 'edit_theme_options' );
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'rest_cannot_assign_location', __( 'Sorry, you are not allowed to assign the provided locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+
+		foreach ( $request['locations'] as $location ) {
+			if ( ! array_key_exists( $location, get_registered_nav_menus() ) ) {
+				return new WP_Error(
+					'rest_menu_location_invalid',
+					__( 'Invalid menu location.' ),
+					array(
+						'status' => 404,
+						'data'   => $location,
+					)
+				);
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -101,7 +123,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$prepared_term = (array) $prepared_term;
 		$schema        = $this->get_item_schema();
 		if ( isset( $request['name'] ) && ! empty( $schema['properties']['name'] ) ) {
-			$response['menu-name'] = $request['name'];
+			$prepared_term['menu-name'] = $request['name'];
 		}
 
 		return $prepared_term;

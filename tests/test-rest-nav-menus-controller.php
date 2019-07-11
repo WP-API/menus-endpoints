@@ -49,7 +49,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertArrayHasKey( 'https://api.w.org/menu-location', $links );
 
 		$location_url = rest_url( '/wp/v2/menu-locations/foo' );
-		$this->assertEquals($location_url, $links['https://api.w.org/menu-location'][0]['href']);
+		$this->assertEquals( $location_url, $links['https://api.w.org/menu-location'][0]['href'] );
 	}
 
 }

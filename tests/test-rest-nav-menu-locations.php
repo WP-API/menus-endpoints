@@ -3,19 +3,11 @@
 class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller_Testcase {
 
 	protected static $admin_id;
-	protected static $author_id;
 
 	public static function wpSetUpBeforeClass( $factory ) {
-
 		self::$admin_id = $factory->user->create(
 			array(
-				'role'       => 'administrator',
-			)
-		);
-
-		self::$author_id     = $factory->user->create(
-			array(
-				'role' => 'author',
+				'role' => 'administrator',
 			)
 		);
 	}
@@ -68,30 +60,29 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 	}
 
 	public function test_get_items() {
-		$menus =  array( 'primary', 'secondary' ) ;
+		$menus = array( 'primary', 'secondary' );
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		wp_set_current_user( self::$admin_id );
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-locations' );
 		$response = rest_get_server()->dispatch( $request );
-		$data = $response->get_data();
-		$data = array_values($data);
+		$data     = $response->get_data();
+		$data     = array_values( $data );
 		$this->assertCount( 2, $data );
-		$names = wp_list_pluck( $data, 'name' );
+		$names        = wp_list_pluck( $data, 'name' );
 		$descriptions = wp_list_pluck( $data, 'description' );
 		$this->assertEquals( $menus, $names );
-		$menu_descriptions = array_map('ucfirst', $names);
+		$menu_descriptions = array_map( 'ucfirst', $names );
 		$this->assertEquals( $menu_descriptions, $descriptions );
 	}
 
 	public function test_get_item() {
-
 		$menu = 'primary';
 		$this->register_nav_menu_locations( array( $menu ) );
 
 		wp_set_current_user( self::$admin_id );
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-locations/' . $menu );
 		$response = rest_get_server()->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 		$this->assertEquals( $menu, $data['name'] );
 	}
 
@@ -117,5 +108,25 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 		$this->assertArrayHasKey( 'name', $properties );
 		$this->assertArrayHasKey( 'description', $properties );
 		$this->assertArrayHasKey( 'menu', $properties );
+	}
+
+
+	public function test_get_item_menu_location_context_without_permission() {
+		wp_set_current_user( 0 );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-locations' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertErrorResponse( 'rest_cannot_view', $response, rest_authorization_required_code() );
+	}
+
+	public function test_get_items_menu_location_context_without_permission() {
+		$menu = 'primary';
+		$this->register_nav_menu_locations( array( $menu ) );
+
+		wp_set_current_user( 0 );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-locations/' . $menu );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertErrorResponse( 'rest_cannot_view', $response, rest_authorization_required_code() );
 	}
 }

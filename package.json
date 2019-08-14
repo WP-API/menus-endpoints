@@ -1,10 +1,10 @@
 {
-  "name": "wp-api-menus-widgets-endpoints",
-  "version": "0.0.0",
+  "name": "wp-api-menus-endpoints",
+  "version": "0.1.0",
   "license" : "GPL-2.0+",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WP-API/wp-api-menus-widgets-endpoints.git"
+    "url": "https://github.com/WP-API/menus-endpoints.git"
   },
   "main": "Gruntfile.js",
   "author": "WP-API Team <team@wp-api.org>",

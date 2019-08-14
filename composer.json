@@ -1,7 +1,7 @@
 {
-    "name": "wp-api/wp-api-menus-widgets-endpoints",
+    "name": "wp-api/menus-endpoints",
     "type": "wordpress-plugin",
-    "description": "Manage your WordPress menus and widgets.",
+    "description": "Manage your WordPress menus through the WordPress REST API.",
     "homepage": "http://wp-api.org/",
     "license": "GPL2+",
     "authors": [

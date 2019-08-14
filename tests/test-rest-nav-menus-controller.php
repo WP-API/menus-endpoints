@@ -77,7 +77,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 	public function test_get_item_schema() {
 	}
-
+  
 	public function test_create_item_with_location_permisson_correct() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		wp_set_current_user( self::$administrator );
@@ -152,5 +152,28 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param( 'locations', 'primary' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( rest_authorization_required_code(), $response->get_status() );
+	}
+  
+	public function test_get_item_links() {
+		$nav_menu_id = wp_update_nav_menu_object(
+			0,
+			array(
+				'description' => 'Foo Menu',
+				'menu-name'   => 'Foo Menu',
+			)
+		);
+
+		register_nav_menu( 'foo', 'Bar' );
+
+		set_theme_mod( 'nav_menu_locations', array( 'foo' => $nav_menu_id ) );
+
+		$request  = new WP_REST_Request( 'GET', sprintf( '/wp/v2/menus/%d', $nav_menu_id ) );
+		$response = rest_get_server()->dispatch( $request );
+
+		$links = $response->get_links();
+		$this->assertArrayHasKey( 'https://api.w.org/menu-location', $links );
+
+		$location_url = rest_url( '/wp/v2/menu-locations/foo' );
+		$this->assertEquals( $location_url, $links['https://api.w.org/menu-location'][0]['href'] );
 	}
 }

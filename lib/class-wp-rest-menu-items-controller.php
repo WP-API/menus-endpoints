@@ -303,7 +303,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					return new WP_Error( 'rest_term_invalid_id', __( 'Invalid term ID.' ), array( 'status' => 400 ) );
 				}
 				$prepared_nav_item['menu-item-object'] = get_term_field( 'taxonomy', $original );
-			} elseif ( 'post_type' === $prepared_nav_item['menu-item-type'] ) { // If post, check if post object exists.
+
+				// If post, check if post object exists.
+			} elseif ( 'post_type' === $prepared_nav_item['menu-item-type'] ) {
 				$original = get_post( (int) $prepared_nav_item['menu-item-object-id'] );
 				if ( empty( $original ) ) {
 					return new WP_Error( 'rest_post_invalid_id', __( 'Invalid post  ID.' ), array( 'status' => 400 ) );
@@ -331,18 +333,22 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			}
 		}
 
-		// If menu if is set, valid position and parent.
+		// If menu id is set, valid the value of menu item position and parent id.
 		if ( ! empty( $prepared_nav_item['menu-id'] ) ) {
 			// Check if nav menu is valid.
 			if ( ! is_nav_menu( $prepared_nav_item['menu-id'] ) ) {
 				return new WP_Error( 'invalid_menu_id', __( 'Invalid menu ID.' ), array( 'status' => 400 ) );
 			}
 
-			// If menu item position is set to 0, when set position to last in existing menu.
+			// If menu item position is set to 0, insert as the last item in the existing menu.
 			$menu_items = (array) wp_get_nav_menu_items( $prepared_nav_item['menu-id'], array( 'post_status' => 'publish,draft' ) );
 			if ( 0 === (int) $prepared_nav_item['menu-item-position'] ) {
-				$last_item                               = array_pop( $menu_items );
-				$prepared_nav_item['menu-item-position'] = ( $last_item && isset( $last_item->menu_order ) ) ? 1 + $last_item->menu_order : count( $menu_items );
+				$last_item = array_pop( $menu_items );
+				if ( $last_item && isset( $last_item->menu_order ) ) {
+					$prepared_nav_item['menu-item-position'] = $last_item->menu_order + 1;
+				} else {
+					$prepared_nav_item['menu-item-position'] = count( $menu_items );
+				}
 			}
 
 			// Check if existing menu position is already in use by another menu item.
@@ -503,7 +509,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'xfn', $fields, true ) ) {
-			$data['xfn'] = explode( ' ', $menu_item->xfn );
+			$data['xfn'] = (array) $menu_item->xfn;
 		}
 
 		if ( in_array( 'meta', $fields, true ) ) {
@@ -672,9 +678,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'enum'        => array( 'taxonomy', 'post_type', 'post_type_archive', 'custom' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'default'     => 'custom',
-			'arg_options' => array(
-				'sanitize_callback' => 'sanitize_key',
-			),
 		);
 
 		$schema['properties']['status'] = array(
@@ -768,24 +771,24 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'type'        => 'string',
 			'format'      => 'uri',
 			'context'     => array( 'view', 'edit', 'embed' ),
-			'arg_options' => array(
-				'sanitize_callback' => 'esc_url_raw',
-			),
 		);
 
 		$schema['properties']['xfn'] = array(
 			'description' => __( 'The XFN relationship expressed in the link of this menu item.' ),
-			'type'        => 'string',
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'string',
+			),
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'arg_options' => array(
 				'sanitize_callback' => function ( $value ) {
-					return implode( ' ', array_map( 'sanitize_html_class', explode( ' ', $value ) ) );
+					return array_map( 'sanitize_html_class', explode( ' ', $value ) );
 				},
 			),
 		);
 
 		$schema['properties']['_invalid'] = array(
-			'description' => __( '      Whether the menu item represents an object that no longer exists .' ),
+			'description' => __( 'Whether the menu item represents an object that no longer exists .' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'boolean',
 			'readonly'    => true,

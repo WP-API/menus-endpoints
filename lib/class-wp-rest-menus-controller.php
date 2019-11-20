@@ -34,6 +34,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 
 	/**
 	 * Checks if a request has access to create a term.
+	 * Also check if request can assign menu locations.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 *
@@ -86,8 +87,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 					'rest_menu_location_invalid',
 					__( 'Invalid menu location.' ),
 					array(
-						'status' => 404,
-						'data'   => $location,
+						'status' => 400,
 					)
 				);
 			}
@@ -387,7 +387,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	 * @param int             $menu_id The menu id to update the location form.
 	 * @param WP_REST_Request $request The request object with menu and locations data.
 	 *
-	 * @return null|WP_Error WP_Error on an error assigning any of the locations, otherwise null.
+	 * @return true|WP_Error WP_Error on an error assigning any of the locations, otherwise null.
 	 */
 	protected function handle_locations( $menu_id, $request ) {
 		if ( ! isset( $request['locations'] ) ) {
@@ -399,7 +399,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$new_locations  = array();
 		foreach ( $request['locations'] as $location ) {
 			if ( ! in_array( $location, $menu_locations, true ) ) {
-				return new WP_Error( 'none_exist_location', __( 'Menu location does not exist.' ), array( 'status' => 400 ) );
+				return new WP_Error( 'check_assign_locations_permission', __( 'Menu location does not exist.' ), array( 'status' => 400 ) );
 			}
 			$new_locations[ $location ] = $menu_id;
 		}

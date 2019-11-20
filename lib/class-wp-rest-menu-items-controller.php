@@ -761,7 +761,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$schema['properties']['type_label'] = array(
 			'description' => __( 'The singular label used to describe this type of menu item.' ),
-			'context'     => array( 'view', 'embed' ),
+			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'string',
 			'readonly'    => true,
 		);

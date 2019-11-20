@@ -279,8 +279,10 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$base     = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
 		// If menus submitted, then check if 1 menu is given, if more than 1 is given, error out.
 		if ( isset( $request[ $base ] ) && ! empty( $request[ $base ] ) ) {
-			if ( count( $request[ $base ] ) > 1 ) {
-				return new WP_Error( 'rest_single_menu', __( 'Unable to test menu item to multiple menus.' ), array( 'status' => 400 ) );
+			$maxItems  = ( int ) $schema['properties'][ $base ]['maxItems'];
+			$nav_menus = count( $request[ $base ] );
+			if ( $maxItems && $nav_menus > $maxItems ) {
+				return new WP_Error( 'rest_invalid_nav_menu_assignmentss', sprintf( __( 'Unable to menu item to %d menus. Max allowed is %d' ), $nav_menus, $maxItems ), array( 'status' => 400 ) );
 			}
 			$prepared_nav_item['menu-id'] = array_shift( $request[ $base ] );
 		}
@@ -807,6 +809,10 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				),
 				'context'     => array( 'view', 'edit' ),
 			);
+
+			if ( 'nav_menu' === $taxonomy ) {
+				$schema['properties'][ $base ]['maxItems'] = 1;
+			}
 		}
 
 		$schema['properties']['meta'] = $this->meta->get_field_schema();

@@ -77,8 +77,8 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 	public function test_get_item_schema() {
 	}
-  
-	public function test_create_item_with_location_permisson_correct() {
+
+	public function test_create_item_with_location_permission_correct() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		wp_set_current_user( self::$administrator );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
@@ -153,7 +153,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( rest_authorization_required_code(), $response->get_status() );
 	}
-  
+
 	public function test_get_item_links() {
 		$nav_menu_id = wp_update_nav_menu_object(
 			0,
@@ -175,5 +175,39 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 		$location_url = rest_url( '/wp/v2/menu-locations/foo' );
 		$this->assertEquals( $location_url, $links['https://api.w.org/menu-location'][0]['href'] );
+	}
+	
+	public function test_change_menu_location() {
+		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
+		$secondary_id = self::factory()->term->create(
+			array(
+				'name'        => 'Secondary Name',
+				'description' => 'Secondary Description',
+				'slug'        => 'secondary-slug',
+				'taxonomy'    => 'nav_menu',
+			)
+		);
+
+		$locations              = get_nav_menu_locations();
+		$locations['primary']   = self::$term_id;
+		$locations['secondary'] = $secondary_id;
+		set_theme_mod( 'nav_menu_locations', $locations );
+
+		wp_set_current_user( self::$administrator );
+
+		$request = new WP_REST_Request( 'PUT', '/wp/v2/menus/' . self::$term_id );
+		$request->set_body_params(
+			array(
+				'locations' => array( 'secondary' ),
+			)
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$locations = get_nav_menu_locations();
+		$this->assertArrayNotHasKey( 'primary', $locations );
+		$this->assertArrayHasKey( 'secondary', $locations );
+		$this->assertEquals( self::$term_id, $locations['secondary'] );
 	}
 }

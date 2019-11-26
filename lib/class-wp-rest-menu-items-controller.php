@@ -277,7 +277,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		$taxonomy = get_taxonomy( 'nav_menu' );
 		$base     = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
-		// If menus submitted, then check if 1 menu is given, if more than 1 is given, error out.
+		// If menus submitted, cast to int.
 		if ( isset( $request[ $base ] ) && ! empty( $request[ $base ] ) ) {
 			$prepared_nav_item['menu-id'] = (int) $request[ $base ];
 		}
@@ -291,7 +291,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			}
 		}
 
-		// Check if object id existing before saving.
+		// Check if object id exists before saving.
 		if ( ! $prepared_nav_item['menu-item-object'] && $prepared_nav_item['menu-item-object-id'] ) {
 			// If taxonony, check if term exists.
 			if ( 'taxonomy' === $prepared_nav_item['menu-item-type'] ) {

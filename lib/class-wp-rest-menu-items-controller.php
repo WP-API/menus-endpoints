@@ -279,7 +279,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$base     = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
 		// If menus submitted, cast to int.
 		if ( isset( $request[ $base ] ) && ! empty( $request[ $base ] ) ) {
-			$prepared_nav_item['menu-id'] = (int) $request[ $base ];
+			$prepared_nav_item['menu-id'] = absint( $request[ $base ] );
 		}
 
 		// Nav menu title.
@@ -295,7 +295,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		if ( ! $prepared_nav_item['menu-item-object'] && $prepared_nav_item['menu-item-object-id'] ) {
 			// If taxonony, check if term exists.
 			if ( 'taxonomy' === $prepared_nav_item['menu-item-type'] ) {
-				$original = get_term( (int) $prepared_nav_item['menu-item-object-id'] );
+				$original = get_term( absint( $prepared_nav_item['menu-item-object-id'] ) );
 				if ( empty( $original ) ) {
 					return new WP_Error( 'rest_term_invalid_id', __( 'Invalid term ID.' ), array( 'status' => 400 ) );
 				}
@@ -303,7 +303,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 				// If post, check if post object exists.
 			} elseif ( 'post_type' === $prepared_nav_item['menu-item-type'] ) {
-				$original = get_post( (int) $prepared_nav_item['menu-item-object-id'] );
+				$original = get_post( absint( $prepared_nav_item['menu-item-object-id'] ) );
 				if ( empty( $original ) ) {
 					return new WP_Error( 'rest_post_invalid_id', __( 'Invalid post  ID.' ), array( 'status' => 400 ) );
 				}

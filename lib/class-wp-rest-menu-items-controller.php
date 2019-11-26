@@ -383,7 +383,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		foreach ( array( 'menu-item-xfn', 'menu-item-classes' ) as $key ) {
 			$value = $prepared_nav_item[ $key ];
 			if ( ! is_array( $value ) ) {
-				$value = explode( ' ', $value );
+				$value = wp_parse_list( $value );
 			}
 			$prepared_nav_item[ $key ] = implode( ' ', array_map( 'sanitize_html_class', $value ) );
 		}
@@ -711,7 +711,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'arg_options' => array(
 				'sanitize_callback' => function ( $value ) {
-					return array_map( 'sanitize_html_class', explode( ' ', $value ) );
+					return array_map( 'sanitize_html_class', wp_parse_list( $value ) );
 				},
 			),
 		);
@@ -779,7 +779,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'arg_options' => array(
 				'sanitize_callback' => function ( $value ) {
-					return array_map( 'sanitize_html_class', explode( ' ', $value ) );
+					return array_map( 'sanitize_html_class', wp_parse_list( $value ) );
 				},
 			),
 		);

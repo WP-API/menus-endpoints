@@ -112,7 +112,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param( 'locations', 'bar' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 400, $response->get_status() );
-		$this->assertErrorResponse( 'rest_menu_location_invalid', $response, 404 );
+		$this->assertErrorResponse( 'rest_menu_location_invalid', $response, 400 );
 	}
 
 	public function test_update_item_with_no_location() {
@@ -195,7 +195,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 		wp_set_current_user( self::$administrator );
 
-		$request = new WP_REST_Request( 'PUT', '/wp/v2/menus/' . self::$term_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . self::$term_id );
 		$request->set_body_params(
 			array(
 				'locations' => array( 'secondary' ),

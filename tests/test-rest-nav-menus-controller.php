@@ -111,7 +111,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param( 'slug', 'so-awesome' );
 		$request->set_param( 'locations', 'bar' );
 		$response = rest_get_server()->dispatch( $request );
-		$this->assertEquals( 404, $response->get_status() );
+		$this->assertEquals( 400, $response->get_status() );
 		$this->assertErrorResponse( 'rest_menu_location_invalid', $response, 404 );
 	}
 
@@ -125,7 +125,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param( 'slug', 'new-slug' );
 		$request->set_param( 'locations', 'bar' );
 		$response = rest_get_server()->dispatch( $request );
-		$this->assertEquals( 404, $response->get_status() );
+		$this->assertEquals( 400, $response->get_status() );
 	}
 
 	public function test_update_item_with_location_permisson_correct() {
@@ -176,7 +176,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$location_url = rest_url( '/wp/v2/menu-locations/foo' );
 		$this->assertEquals( $location_url, $links['https://api.w.org/menu-location'][0]['href'] );
 	}
-	
+
 	public function test_change_menu_location() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		$secondary_id = self::factory()->term->create(

@@ -409,7 +409,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 				unset( $assigned_menu[ $location ] );
 			}
 		}
-		$new_assignments = array_merge( $new_locations, $assigned_menu );
+		$new_assignments = array_merge( $assigned_menu, $new_locations );
 		set_theme_mod( 'nav_menu_locations', $new_assignments );
 
 		return true;

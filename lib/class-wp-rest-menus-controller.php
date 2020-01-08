@@ -14,6 +14,46 @@
 class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 
 	/**
+	 * Checks if a request has access to read terms in the specified taxonomy.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return bool|WP_Error True if the request has read access, otherwise false or WP_Error object.
+	 */
+	public function get_items_permissions_check( $request ) {
+		$tax_obj = get_taxonomy( $this->taxonomy );
+		if ( ! $tax_obj || ! $this->check_is_taxonomy_allowed( $this->taxonomy ) ) {
+			return false;
+		}
+		if ( ! current_user_can( $tax_obj->cap->edit_terms ) ) {
+			if ( 'edit' === $request['context'] ) {
+				return new WP_Error( 'rest_forbidden_context', __( 'Sorry, you are not allowed to edit terms in this taxonomy.' ), array( 'status' => rest_authorization_required_code() ) );
+			}
+			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view these menus, unless you have access to allow edit them. ' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+		return true;
+	}
+
+	/**
+	 * Checks if a request has access to read or edit the specified menu.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return bool|WP_Error True if the request has read access for the item, otherwise false or WP_Error object.
+	 */
+	public function get_item_permissions_check( $request ) {
+		$term = $this->get_term( $request['id'] );
+		if ( is_wp_error( $term ) ) {
+			return $term;
+		}
+		if ( ! current_user_can( 'edit_term', $term->term_id ) ) {
+			if ( 'edit' === $request['context'] ) {
+				return new WP_Error( 'rest_forbidden_context', __( 'Sorry, you are not allowed to edit this term.' ), array( 'status' => rest_authorization_required_code() ) );
+			}
+			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view this menu, unless you have access to allow edit it. ' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+		return true;
+	}
+
+	/**
 	 * Get the term, if the ID is valid.
 	 *
 	 * @param int $id Supplied ID.

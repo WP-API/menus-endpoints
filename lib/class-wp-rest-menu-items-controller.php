@@ -42,6 +42,41 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	}
 
 	/**
+	 * Checks if a given request has access to read a menu item if they have access to edit them.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return bool|WP_Error True if the request has read access for the item, WP_Error object otherwise.
+	 */
+	public function get_item_permissions_check( $request ) {
+		$post = $this->get_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( $post && ! $this->check_update_permission( $post ) ) {
+			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view this menu item, unless you have access to allow edit it. ' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+
+		return parent::get_item_permissions_check( $request );
+	}
+
+	/**
+	 * Checks if a given request has access to read menu items if they have access to edit them.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has read access, WP_Error object otherwise.
+	 */
+	public function get_items_permissions_check( $request ) {
+		$post_type = get_post_type_object( $this->post_type );
+		if ( ! current_user_can( $post_type->cap->edit_posts ) ) {
+			if ( 'edit' === $request['context'] ) {
+				return new WP_Error( 'rest_forbidden_context', __( 'Sorry, you are not allowed to edit posts in this post type.' ), array( 'status' => rest_authorization_required_code() ) );
+			}
+			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view these menu items, unless you have access to allow edit them. ' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+		return true;
+	}
+
+	/**
 	 * Creates a single post.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.

@@ -77,14 +77,14 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		wp_set_current_user( 0 );
 		$request = new WP_REST_Request( 'GET', '/wp/v2/menus' );
 		$response = rest_get_server()->dispatch( $request );
-		$this->assertErrorResponse( 'rest_forbidden_access', $response, 401 );
+		$this->assertErrorResponse( 'rest_cannot_view', $response, 401 );
 	}
 
 	public function test_get_item_no_permission() {
 		wp_set_current_user( 0 );
 		$request = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $this->menu_id  );
 		$response = rest_get_server()->dispatch( $request );
-		$this->assertErrorResponse( 'rest_forbidden_access', $response, 401 );
+		$this->assertErrorResponse( 'rest_cannot_view', $response, 401 );
 	}
 
 }

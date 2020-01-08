@@ -28,7 +28,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			if ( 'edit' === $request['context'] ) {
 				return new WP_Error( 'rest_forbidden_context', __( 'Sorry, you are not allowed to edit terms in this taxonomy.' ), array( 'status' => rest_authorization_required_code() ) );
 			}
-			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view these menus, unless you have access to allow edit them. ' ), array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you cannot view these menus, unless you have access to permission edit them. ' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;
 	}
@@ -48,7 +48,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			if ( 'edit' === $request['context'] ) {
 				return new WP_Error( 'rest_forbidden_context', __( 'Sorry, you are not allowed to edit this term.' ), array( 'status' => rest_authorization_required_code() ) );
 			}
-			return new WP_Error( 'rest_forbidden_access', __( 'Sorry, you view this menu, unless you have access to allow edit it. ' ), array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'rest_cannot_view', __( 'Sorry, you cannot view this menu, unless you have access to permission edit it. ' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;
 	}

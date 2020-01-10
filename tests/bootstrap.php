@@ -2,7 +2,7 @@
 /**
  * PHPUnit bootstrap file
  *
- * @package Wp_Api_Menus_Widgets_Endpoints
+ * @package Wp_Api_Menus_Endpoints
  */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );

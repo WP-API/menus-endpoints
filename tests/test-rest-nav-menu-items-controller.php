@@ -256,7 +256,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 
 		// Standard fields
 		$this->assertEquals( $post->ID, $data['id'] );
-		$this->assertEquals( get_permalink( $post->ID ), $data['link'] );
 		if ( '0000-00-00 00:00:00' === $post->post_date_gmt ) {
 			$post_date_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_date ) - ( get_option( 'gmt_offset' ) * 3600 ) );
 			$this->assertEquals( mysql_to_rfc3339( $post_date_gmt ), $data['date_gmt'] );
@@ -303,6 +302,16 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		} else {
 			$this->assertFalse( isset( $data['menu_order'] ) );
 		}
+
+		$taxonomies = wp_list_filter( get_object_taxonomies( $post->post_type, 'objects' ), array( 'show_in_rest' => true ) );
+		foreach ( $taxonomies as $taxonomy ) {
+			$this->assertTrue( isset( $data[ $taxonomy->rest_base ] ) );
+			$terms = wp_get_object_terms( $post->ID, $taxonomy->name, array( 'fields' => 'ids' ) );
+			sort( $terms );
+			sort( $data[ $taxonomy->rest_base ] );
+			$this->assertEquals( $terms, $data[ $taxonomy->rest_base ] );
+		}
+
 
 		// test links
 		if ( $links ) {

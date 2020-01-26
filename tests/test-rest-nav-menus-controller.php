@@ -193,9 +193,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param(
 			'meta',
 			array(
-				'test_single_menu' => 'just meta',
-				'test_tag_single'  => 'tag-specific meta',
-				'test_cat_meta'    => 'category-specific meta',
+				'test_single_menu' => 'just meta'
 			)
 		);
 		$response = rest_get_server()->dispatch( $request );
@@ -205,7 +203,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( 'New Description', $data['description'] );
 		$this->assertEquals( 'new-name', $data['slug'] );
 		$this->assertEquals( 'just meta', $data['meta']['test_single_menu'] );
-		$this->assertEquals( 'tag-specific meta', $data['meta']['test_tag_single'] );
 		$this->assertFalse( isset( $data['meta']['test_cat_meta'] ) );
 	}
 
@@ -378,6 +375,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $term->slug, $data['slug'] );
 		$this->assertEquals( $term->description, $data['description'] );
 		$this->assertFalse( isset( $term->parent ) );
+		$this->assertEquals( $term->parent, $data['parent'] );
 
 		$relations = array(
 			'self',

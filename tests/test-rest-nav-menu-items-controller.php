@@ -103,6 +103,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		sort( $keys );
 		$this->assertEquals(
 			array(
+				'after',
 				'before',
 				'context',
 				'exclude',
@@ -265,5 +266,107 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-items/' . $menu_item_id );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 403 );
+	}
+
+	/**
+	 * @param $post
+	 * @param $data
+	 * @param $context
+	 * @param $links
+	 */
+	protected function check_post_data( $post, $data, $context, $links ) {
+		$post_type_obj = get_post_type_object( $post->post_type );
+
+		// Standard fields
+		$this->assertEquals( $post->ID, $data['id'] );
+		$this->assertEquals( $post->post_name, $data['slug'] );
+		$this->assertEquals( get_permalink( $post->ID ), $data['link'] );
+		if ( '0000-00-00 00:00:00' === $post->post_date_gmt ) {
+			$post_date_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_date ) - ( get_option( 'gmt_offset' ) * 3600 ) );
+			$this->assertEquals( mysql_to_rfc3339( $post_date_gmt ), $data['date_gmt'] );
+		} else {
+			$this->assertEquals( mysql_to_rfc3339( $post->post_date_gmt ), $data['date_gmt'] );
+		}
+		$this->assertEquals( mysql_to_rfc3339( $post->post_date ), $data['date'] );
+
+		if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
+			$post_modified_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_modified ) - ( get_option( 'gmt_offset' ) * 3600 ) );
+			$this->assertEquals( mysql_to_rfc3339( $post_modified_gmt ), $data['modified_gmt'] );
+		} else {
+			$this->assertEquals( mysql_to_rfc3339( $post->post_modified_gmt ), $data['modified_gmt'] );
+		}
+		$this->assertEquals( mysql_to_rfc3339( $post->post_modified ), $data['modified'] );
+
+		// author
+		if ( post_type_supports( $post->post_type, 'author' ) ) {
+			$this->assertEquals( $post->post_author, $data['author'] );
+		} else {
+			$this->assertEmpty( $data['author'] );
+		}
+
+		// post_parent
+		if ( $post_type_obj->hierarchical ) {
+			$this->assertArrayHasKey( 'parent', $data );
+			if ( $post->post_parent ) {
+				if ( is_int( $data['parent'] ) ) {
+					$this->assertEquals( $post->post_parent, $data['parent'] );
+				} else {
+					$this->assertEquals( $post->post_parent, $data['parent']['id'] );
+					$this->check_get_post_response( $data['parent'], get_post( $data['parent']['id'] ), 'view-parent' );
+				}
+			} else {
+				$this->assertEmpty( $data['parent'] );
+			}
+		} else {
+			$this->assertFalse( isset( $data['parent'] ) );
+		}
+
+		// page attributes
+		if ( $post_type_obj->hierarchical && post_type_supports( $post->post_type, 'page-attributes' ) ) {
+			$this->assertEquals( $post->menu_order, $data['menu_order'] );
+		} else {
+			$this->assertFalse( isset( $data['menu_order'] ) );
+		}
+
+		// test links
+		if ( $links ) {
+
+			$links     = test_rest_expand_compact_links( $links );
+			$post_type = get_post_type_object( $data['type'] );
+			$this->assertEquals( $links['self'][0]['href'], rest_url( 'wp/v2/' . $post_type->rest_base . '/' . $data['id'] ) );
+			$this->assertEquals( $links['collection'][0]['href'], rest_url( 'wp/v2/' . $post_type->rest_base ) );
+			$this->assertEquals( $links['about'][0]['href'], rest_url( 'wp/v2/types/' . $data['type'] ) );
+
+			if ( post_type_supports( $post->post_type, 'author' ) && $data['author'] ) {
+				$this->assertEquals( $links['author'][0]['href'], rest_url( 'wp/v2/users/' . $data['author'] ) );
+			}
+
+			if ( post_type_supports( $post->post_type, 'comments' ) ) {
+				$this->assertEquals( $links['replies'][0]['href'], add_query_arg( 'post', $data['id'], rest_url( 'wp/v2/comments' ) ) );
+			}
+
+			if ( post_type_supports( $post->post_type, 'revisions' ) ) {
+				$this->assertEquals( $links['version-history'][0]['href'], rest_url( 'wp/v2/' . $post_type->rest_base . '/' . $data['id'] . '/revisions' ) );
+			}
+
+			if ( $post_type->hierarchical && ! empty( $data['parent'] ) ) {
+				$this->assertEquals( $links['up'][0]['href'], rest_url( 'wp/v2/' . $post_type->rest_base . '/' . $data['parent'] ) );
+			}
+
+			if ( ! in_array( $data['type'], array( 'attachment', 'nav_menu_item', 'revision' ), true ) ) {
+				$this->assertEquals( $links['https://api.w.org/attachment'][0]['href'], add_query_arg( 'parent', $data['id'], rest_url( 'wp/v2/media' ) ) );
+			}
+
+			if ( ! empty( $data['featured_media'] ) ) {
+				$this->assertEquals( $links['https://api.w.org/featuredmedia'][0]['href'], rest_url( 'wp/v2/media/' . $data['featured_media'] ) );
+			}
+
+			$num = 0;
+			foreach ( $taxonomies as $key => $taxonomy ) {
+				$this->assertEquals( $taxonomy->name, $links['https://api.w.org/term'][ $num ]['attributes']['taxonomy'] );
+				$this->assertEquals( add_query_arg( 'post', $data['id'], rest_url( 'wp/v2/' . $taxonomy->rest_base ) ), $links['https://api.w.org/term'][ $num ]['href'] );
+				$num++;
+			}
+		}
 	}
 }

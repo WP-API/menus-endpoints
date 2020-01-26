@@ -115,7 +115,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 			0,
 			array(
 				'description' => 'Test get',
-				'menu-name'   => 'test Name get'
+				'menu-name'   => 'test Name get',
 			)
 		);
 		$request     = new WP_REST_Request( 'GET', '/wp/v2/menus' );
@@ -138,7 +138,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		);
 		$request     = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $nav_menu_id );
 		$response    = rest_get_server()->dispatch( $request );
-		$this->check_get_taxonomy_term_response( $response );
+		$this->check_get_taxonomy_term_response( $response, $nav_menu_id );
 	}
 
 	/**
@@ -349,11 +349,11 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	/**
 	 * @param $response
 	 */
-	protected function check_get_taxonomy_term_response( $response ) {
+	protected function check_get_taxonomy_term_response( $response, $id ) {
 		$this->assertEquals( 200, $response->get_status() );
 
-		$data = $response->get_data();
-		$menu = get_term( 1, self::TAXONOMY );
+		$data  = $response->get_data();
+		$menu  = get_term( $id, self::TAXONOMY );
 		$this->check_taxonomy_term( $menu, $data, $response->get_links() );
 	}
 
@@ -367,8 +367,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $term->name, $data['name'] );
 		$this->assertEquals( $term->slug, $data['slug'] );
 		$this->assertEquals( $term->description, $data['description'] );
-		$this->assertEquals( get_term_link( $term ), $data['link'] );
-		$this->assertEquals( $term->count, $data['count'] );
 		$taxonomy = get_taxonomy( $term->taxonomy );
 		if ( $taxonomy->hierarchical ) {
 			$this->assertEquals( $term->parent, $data['parent'] );

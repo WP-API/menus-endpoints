@@ -157,7 +157,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertContains( '/wp/v2/menus/' . $data['id'], $headers['Location'] );
 		$this->assertEquals( 'My Awesome menus', $data['name'] );
 		$this->assertEquals( 'This menu is so awesome.', $data['description'] );
-		$this->assertEquals( 'so-awesome', $data['slug'] );
+		$this->assertEquals( 'my-awesome-menus', $data['slug'] );
 	}
 
 	/**
@@ -236,7 +236,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		);
 
 		$term = get_term_by( 'id', $nav_menu_id, self::TAXONOMY );
-
+		wp_set_current_user( self::$admin_id );
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $term->term_id );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
@@ -342,7 +342,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $tags[0]->term_id, $data[0]['id'] );
 		$this->assertEquals( $tags[0]->name, $data[0]['name'] );
 		$this->assertEquals( $tags[0]->slug, $data[0]['slug'] );
-		$this->assertEquals( $tags[0]->taxonomy, $data[0]['taxonomy'] );
 		$this->assertEquals( $tags[0]->description, $data[0]['description'] );
 		$this->assertEquals( $tags[0]->count, $data[0]['count'] );
 	}

@@ -124,7 +124,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$prepared_term = (array) $prepared_term;
 		$schema        = $this->get_item_schema();
 		if ( isset( $request['name'] ) && ! empty( $schema['properties']['name'] ) ) {
-			$response['menu-name'] = $request['name'];
+			$prepared_term['menu-name'] = $request['name'];
 		}
 
 		return $prepared_term;

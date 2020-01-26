@@ -524,7 +524,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		// Base fields for every post.
 		$menu_item = wp_setup_nav_menu_item( $post );
-		$data = array();
+		$data      = array();
 		if ( in_array( 'id', $fields, true ) ) {
 			$data['id'] = $menu_item->ID;
 		}
@@ -600,7 +600,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'xfn', $fields, true ) ) {
-			$data['xfn'] = array_map( 'sanitize_html_class', explode( ' ',  $menu_item->xfn  ) );
+			$data['xfn'] = array_map( 'sanitize_html_class', explode( ' ', $menu_item->xfn ) );
 		}
 
 		if ( in_array( 'meta', $fields, true ) ) {

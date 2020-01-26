@@ -6,7 +6,7 @@
  * Description: REST endpoints for accessing and interacting with Navigation Menus.
  * Author: WP REST API Team
  * Author URI: http://wp-api.org
- * Version: 0.1.0
+ * Version: 0.4.0
  * Plugin URI: https://github.com/WP-API/menus-endpoints
  * License: GPL2+
  *

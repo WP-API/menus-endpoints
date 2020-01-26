@@ -236,6 +236,56 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 	}
 
 	/**
+	 * Deletes a single menu item.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True on success, or WP_Error object on failure.
+	 */
+	public function delete_item( $request ) {
+		$menu_item = $this->get_nav_menu_item( $request['id'] );
+		if ( is_wp_error( $menu_item ) ) {
+			return $menu_item;
+		}
+
+		$force = isset( $request['force'] ) ? (bool) $request['force'] : false;
+
+		// We don't support trashing for menu items.
+		if ( ! $force ) {
+			/* translators: %s: force=true */
+			return new WP_Error( 'rest_trash_not_supported', sprintf( __( "Menu items do not support trashing. Set '%s' to delete." ), 'force=true' ), array( 'status' => 501 ) );
+		}
+
+		$previous = $this->prepare_item_for_response( $menu_item, $request );
+
+		$result = wp_delete_post( $request['id'], true );
+
+		if ( ! $result ) {
+			return new WP_Error( 'rest_cannot_delete', __( 'The post cannot be deleted.' ), array( 'status' => 500 ) );
+		}
+
+		$response = new WP_REST_Response();
+		$response->set_data(
+			array(
+				'deleted'  => true,
+				'previous' => $previous->get_data(),
+			)
+		);
+
+		/**
+		 * Fires immediately after a single menu item is deleted or trashed via the REST API.
+		 *
+		 * They dynamic portion of the hook name, `$this->post_type`, refers to the post type slug.
+		 *
+		 * @param Object          $menu_item  The deleted or trashed menu item.
+		 * @param WP_REST_Response $response The response data.
+		 * @param WP_REST_Request  $request  The request sent to the API.
+		 */
+		do_action( "rest_delete_{$this->post_type}", $menu_item, $response, $request );
+
+		return $response;
+	}
+
+	/**
 	 * Prepares a single post for create or update.
 	 *
 	 * @param WP_REST_Request $request Request object.

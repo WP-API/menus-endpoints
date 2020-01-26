@@ -1,6 +1,6 @@
 <?php
 
-class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Testcase {
+class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Controller_Testcase {
 	/**
 	 * @var int
 	 */
@@ -103,15 +103,13 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		sort( $keys );
 		$this->assertEquals(
 			array(
-				'after',
-				'author',
-				'author_exclude',
 				'before',
-				'categories',
-				'categories_exclude',
 				'context',
 				'exclude',
 				'include',
+				'menu_order',
+				'menus',
+				'menus_exclude',
 				'offset',
 				'order',
 				'orderby',
@@ -120,10 +118,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 				'search',
 				'slug',
 				'status',
-				'sticky',
-				'tags',
-				'tags_exclude',
-				'tax_relation',
 			),
 			$keys
 		);
@@ -138,7 +132,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		$data     = $response->get_data();
 		$keys     = array_keys( $data['endpoints'][0]['args'] );
 		sort( $keys );
-		$this->assertEquals( array( 'context', 'id', 'password' ), $keys );
+		$this->assertEquals( array( 'context', 'id' ), $keys );
 	}
 
 	/**

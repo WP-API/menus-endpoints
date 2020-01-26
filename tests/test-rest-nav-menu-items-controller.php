@@ -25,6 +25,11 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	protected static $subscriber_id;
 
 	/**
+	 *
+	 */
+	const POST_TYPE = 'nav_menu_item';
+
+	/**
 	 * @param $factory
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
@@ -151,6 +156,11 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_get_item() {
+		wp_set_current_user( self::$admin_id );
+		$request  = new WP_REST_Request( 'GET', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->check_get_post_response( $response, 'view' );
 	}
 
 	/**
@@ -291,14 +301,14 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 * @param $links
 	 */
 	protected function check_menu_item_data( $post, $data, $context, $links ) {
-		$post_type_obj = get_post_type_object( $post->post_type );
+		$post_type_obj = get_post_type_object( self::POST_TYPE );
 
 		// Standard fields
 		$this->assertEquals( $post->ID, $data['id'] );
 		$this->assertEquals( wpautop( $post->post_content ), $data['description'] );
 
 		// Check filtered values.
-		if ( post_type_supports( $post->post_type, 'title' ) ) {
+		if ( post_type_supports( self::POST_TYPE, 'title' ) ) {
 			add_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
 			$this->assertEquals( $post->title, $data['title']['rendered'] );
 			remove_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
@@ -328,7 +338,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		// page attributes
 		$this->assertEquals( $post->menu_order, $data['menu_order'] );
 
-		$taxonomies = wp_list_filter( get_object_taxonomies( $post->post_type, 'objects' ), array( 'show_in_rest' => true ) );
+		$taxonomies = wp_list_filter( get_object_taxonomies( self::POST_TYPE, 'objects' ), array( 'show_in_rest' => true ) );
 		foreach ( $taxonomies as $taxonomy ) {
 			$this->assertTrue( isset( $data[ $taxonomy->rest_base ] ) );
 			$terms = wp_get_object_terms( $post->ID, $taxonomy->name, array( 'fields' => 'ids' ) );
@@ -342,7 +352,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$links     = test_rest_expand_compact_links( $links );
 			$this->assertEquals( $links['self'][0]['href'], rest_url( 'wp/v2/' . $post_type_obj->rest_base . '/' . $data['id'] ) );
 			$this->assertEquals( $links['collection'][0]['href'], rest_url( 'wp/v2/' . $post_type_obj->rest_base ) );
-			$this->assertEquals( $links['about'][0]['href'], rest_url( 'wp/v2/types/' . $post_type_obj->rest_base ) );
+			$this->assertEquals( $links['about'][0]['href'], rest_url( 'wp/v2/types/' . self::POST_TYPE ) );
 
 			$num = 0;
 			foreach ( $taxonomies as $key => $taxonomy ) {

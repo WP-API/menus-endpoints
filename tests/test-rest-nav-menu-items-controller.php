@@ -342,7 +342,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$links     = test_rest_expand_compact_links( $links );
 			$this->assertEquals( $links['self'][0]['href'], rest_url( 'wp/v2/' . $post_type_obj->rest_base . '/' . $data['id'] ) );
 			$this->assertEquals( $links['collection'][0]['href'], rest_url( 'wp/v2/' . $post_type_obj->rest_base ) );
-			$this->assertEquals( $links['about'][0]['href'], rest_url( 'wp/v2/types/' . $data['type'] ) );
+			$this->assertEquals( $links['about'][0]['href'], rest_url( 'wp/v2/types/' . $post_type_obj->rest_base ) );
 
 			$num = 0;
 			foreach ( $taxonomies as $key => $taxonomy ) {

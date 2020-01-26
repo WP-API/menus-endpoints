@@ -4,9 +4,15 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	/**
 	 * @var int
 	 */
-	public $menu_id;
-	public $tag_id;
-	public $menu_item_id;
+	protected static $menu_id;
+	/**
+	 * @var
+	 */
+	protected static $tag_id;
+	/**
+	 * @var
+	 */
+	protected static $menu_item_id;
 
 	/**
 	 * @var
@@ -68,6 +74,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		$this->assertCount( 3, $routes['/wp/v2/menu-items/(?P<id>[\d]+)'] );
 	}
 
+	/**
+	 *
+	 */
 	public function test_context_param() {
 		// Collection
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
@@ -83,6 +92,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		$this->assertEquals( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
 	}
 
+	/**
+	 *
+	 */
 	public function test_registered_query_params() {
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
 		$response = rest_get_server()->dispatch( $request );
@@ -117,6 +129,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		);
 	}
 
+	/**
+	 *
+	 */
 	public function test_registered_get_item_params() {
 		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
@@ -149,6 +164,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		$this->assertEquals( $headers['Allow'], 'GET, POST, PUT, PATCH, DELETE' );
 	}
 
+	/**
+	 *
+	 */
 	public function test_get_items() {
 		wp_set_current_user( self::$admin_id );
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-items' );

@@ -167,12 +167,40 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_create_item() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_post_data();
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->check_create_menu_item_response( $response );
 	}
 
 	/**
 	 *
 	 */
 	public function test_update_item() {
+		wp_set_current_user( self::$editor_id );
+
+		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_post_data();
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->check_update_menu_item_response( $response );
+		$new_data = $response->get_data();
+		$this->assertEquals( self::$menu_item_id, $new_data['id'] );
+		$this->assertEquals( $params['title'], $new_data['title']['raw'] );
+		$this->assertEquals( $params['description'], $new_data['description'] );
+		$this->assertEquals( $params['type_label'], $new_data['type_label'] );
+		$post = get_post( self::$menu_item_id );
+		$menu_item = wp_setup_nav_menu_item( $post );
+		$this->assertEquals( $params['title'], $post->title );
+		$this->assertEquals( $params['description'], $post->description );
+		$this->assertEquals( $params['type_label'], $post->type_label );
 	}
 
 	/**
@@ -401,4 +429,36 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$this->check_menu_item_data( $menu_item, $data, $context, $response->get_links() );
 
 	}
+
+	/**
+	 * @param $response
+	 */
+	protected function check_create_menu_item_response( $response ) {
+		$this->assertNotWPError( $response );
+		$response = rest_ensure_response( $response );
+
+		$this->assertEquals( 201, $response->get_status() );
+		$headers = $response->get_headers();
+		$this->assertArrayHasKey( 'Location', $headers );
+
+		$data = $response->get_data();
+		$post = get_post( $data['id'] );
+		$menu_item = wp_setup_nav_menu_item( $post );
+		$this->check_menu_item_data( $menu_item, $data, 'edit', $response->get_links() );
+	}
+
+	protected function check_update_menu_item_response( $response ) {
+		$this->assertNotWPError( $response );
+		$response = rest_ensure_response( $response );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$headers = $response->get_headers();
+		$this->assertArrayNotHasKey( 'Location', $headers );
+
+		$data = $response->get_data();
+		$post = get_post( $data['id'] );
+		$menu_item = wp_setup_nav_menu_item( $post );
+		$this->check_menu_item_data( $menu_item, $data, 'edit', $response->get_links() );
+	}
+
 }

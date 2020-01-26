@@ -144,7 +144,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-items' );
 		$response = rest_get_server()->dispatch( $request );
 
-		$this->check_get_posts_response( $response );
+		$this->check_get_menu_items_response( $response );
 	}
 
 	/**
@@ -245,13 +245,49 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 403 );
 	}
 
+
+	protected function check_get_menu_items_response( $response, $context = 'view' ) {
+		$this->assertNotWPError( $response );
+		$response = rest_ensure_response( $response );
+		$this->assertEquals( 200, $response->get_status() );
+
+		$headers = $response->get_headers();
+		$this->assertArrayHasKey( 'X-WP-Total', $headers );
+		$this->assertArrayHasKey( 'X-WP-TotalPages', $headers );
+
+		$all_data = $response->get_data();
+		foreach ( $all_data as $data ) {
+			$post = get_post( $data['id'] );
+			// Base fields for every post.
+			$menu_item = wp_setup_nav_menu_item( $post );
+			// as the links for the post are "response_links" format in the data array we have to pull them
+			// out and parse them.
+			$links = $data['_links'];
+			foreach ( $links as &$links_array ) {
+				foreach ( $links_array as &$link ) {
+					$attributes         = array_diff_key(
+						$link,
+						array(
+							'href' => 1,
+							'name' => 1,
+						)
+					);
+					$link               = array_diff_key( $link, $attributes );
+					$link['attributes'] = $attributes;
+				}
+			}
+
+			$this->check_menu_item_data( $menu_item, $data, $context, $links );
+		}
+	}
+
 	/**
 	 * @param $post
 	 * @param $data
 	 * @param $context
 	 * @param $links
 	 */
-	protected function check_post_data( $post, $data, $context, $links ) {
+	protected function check_menu_item_data( $post, $data, $context, $links ) {
 		$post_type_obj = get_post_type_object( $post->post_type );
 
 		// Standard fields
@@ -261,7 +297,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		// Check filtered values.
 		if ( post_type_supports( $post->post_type, 'title' ) ) {
 			add_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
-			$this->assertEquals( get_the_title( $post->ID ), $data['title']['rendered'] );
+			$this->assertEquals( $post->title, $data['title']['rendered'] );
 			remove_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
 			if ( 'edit' === $context ) {
 				$this->assertEquals( $post->post_title, $data['title']['raw'] );

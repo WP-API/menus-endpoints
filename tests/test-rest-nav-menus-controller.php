@@ -1,6 +1,7 @@
 <?php
 
 class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase {
+
 	/**
 	 * @var int
 	 */
@@ -11,7 +12,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	protected static $subscriber_id;
 
 	public static function wpSetUpBeforeClass( $factory ) {
-		self::$admin_id = $factory->user->create(
+		self::$admin_id      = $factory->user->create(
 			array(
 				'role' => 'administrator',
 			)
@@ -23,34 +24,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		);
 	}
 
-	function setUp() {
+	public function setUp() {
 		parent::setUp();
-		$this->menu_id = wp_create_nav_menu( rand_str() );
-	}
 
-	protected static $administrator;
-	protected static $contributor;
-	protected static $term_id;
-
-	public static function wpSetUpBeforeClass( $factory ) {
-		self::$administrator = $factory->user->create(
-			array(
-				'role' => 'administrator',
-			)
-		);
-		self::$contributor   = $factory->user->create(
-			array(
-				'role' => 'contributor',
-			)
-		);
-	}
-
-
-	/**
-	 * Set up.
-	 */
-	function setUp() {
-		parent::setUp();
 		// Unregister all nav menu locations.
 		foreach ( array_keys( get_registered_nav_menus() ) as $location ) {
 			unregister_nav_menu( $location );
@@ -63,7 +39,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 			'taxonomy'    => 'nav_menu',
 		);
 
-		self::$term_id = $this->factory->term->create( $orig_args );
+		$this->menu_id = $this->factory->term->create( $orig_args );
 	}
 
 	/**
@@ -71,7 +47,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	 *
 	 * @param array $locations Location slugs.
 	 */
-	function register_nav_menu_locations( $locations ) {
+	public function register_nav_menu_locations( $locations ) {
 		foreach ( $locations as $location ) {
 			register_nav_menu( $location, ucfirst( $location ) );
 		}
@@ -106,21 +82,21 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 	public function test_create_item_with_location_permission_correct() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
-		wp_set_current_user( self::$administrator );
+		wp_set_current_user( self::$admin_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome Term' );
 		$request->set_param( 'slug', 'so-awesome' );
 		$request->set_param( 'locations', 'primary' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 201, $response->get_status() );
-		$data    = $response->get_data();
-		$term_id = $data['id'];
+		$data      = $response->get_data();
+		$term_id   = $data['id'];
 		$locations = get_nav_menu_locations();
 		$this->assertEquals( $locations['primary'], $term_id );
 	}
 
 	public function test_create_item_with_location_permisson_incorrect() {
-		wp_set_current_user( self::$contributor );
+		wp_set_current_user( self::$subscriber_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome Term' );
 		$request->set_param( 'slug', 'so-awesome' );
@@ -131,7 +107,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	}
 
 	public function test_create_item_with_location_permisson_no_location() {
-		wp_set_current_user( self::$administrator );
+		wp_set_current_user( self::$admin_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome Term' );
 		$request->set_param( 'slug', 'so-awesome' );
@@ -143,9 +119,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 	public function test_update_item_with_no_location() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
-		wp_set_current_user( self::$administrator );
+		wp_set_current_user( self::$admin_id );
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . self::$term_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
 		$request->set_param( 'name', 'New Name' );
 		$request->set_param( 'description', 'New Description' );
 		$request->set_param( 'slug', 'new-slug' );
@@ -156,8 +132,8 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 
 	public function test_update_item_with_location_permisson_correct() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
-		wp_set_current_user( self::$administrator );
-		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . self::$term_id );
+		wp_set_current_user( self::$admin_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
 		$request->set_param( 'name', 'New Name' );
 		$request->set_param( 'description', 'New Description' );
 		$request->set_param( 'slug', 'new-slug' );
@@ -165,13 +141,13 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 200, $response->get_status() );
 		$locations = get_nav_menu_locations();
-		$this->assertEquals( $locations['primary'], self::$term_id );
+		$this->assertEquals( $locations['primary'], $this->menu_id );
 	}
 
 	public function test_update_item_with_location_permisson_incorrect() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
-		wp_set_current_user( self::$contributor );
-		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . self::$term_id );
+		wp_set_current_user( self::$subscriber_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
 		$request->set_param( 'name', 'New Name' );
 		$request->set_param( 'description', 'New Description' );
 		$request->set_param( 'slug', 'new-slug' );
@@ -217,13 +193,13 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		);
 
 		$locations              = get_nav_menu_locations();
-		$locations['primary']   = self::$term_id;
+		$locations['primary']   = $this->menu_id;
 		$locations['secondary'] = $secondary_id;
 		set_theme_mod( 'nav_menu_locations', $locations );
 
-		wp_set_current_user( self::$administrator );
+		wp_set_current_user( self::$admin_id );
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . self::$term_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
 		$request->set_body_params(
 			array(
 				'locations' => array( 'secondary' ),
@@ -236,33 +212,33 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$locations = get_nav_menu_locations();
 		$this->assertArrayNotHasKey( 'primary', $locations );
 		$this->assertArrayHasKey( 'secondary', $locations );
-		$this->assertEquals( self::$term_id, $locations['secondary'] );
+		$this->assertEquals( $this->menu_id, $locations['secondary'] );
 	}
 
 	public function test_get_items_no_permission() {
 		wp_set_current_user( 0 );
-		$request = new WP_REST_Request( 'GET', '/wp/v2/menus' );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 401 );
 	}
 
 	public function test_get_item_no_permission() {
 		wp_set_current_user( 0 );
-		$request = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $this->menu_id  );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $this->menu_id );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 401 );
 	}
 
 	public function test_get_items_wrong_permission() {
 		wp_set_current_user( self::$subscriber_id );
-		$request = new WP_REST_Request( 'GET', '/wp/v2/menus' );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 403 );
 	}
 
 	public function test_get_item_wrong_permission() {
 		wp_set_current_user( self::$subscriber_id );
-		$request = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $this->menu_id  );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $this->menu_id );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 403 );
 	}

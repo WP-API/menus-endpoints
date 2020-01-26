@@ -256,7 +256,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 
 		// Standard fields
 		$this->assertEquals( $post->ID, $data['id'] );
-		$this->assertEquals( $post->post_content, $data['description'] );
+		$this->assertEquals( wpautop( $post->post_content ), $data['description'] );
 
 		// Check filtered values.
 		if ( post_type_supports( $post->post_type, 'title' ) ) {
@@ -305,10 +305,8 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$this->assertEquals( $terms, $data[ $taxonomy->rest_base ] );
 		}
 
-
 		// test links
 		if ( $links ) {
-
 			$links     = test_rest_expand_compact_links( $links );
 			$post_type = get_post_type_object( $data['type'] );
 			$this->assertEquals( $links['self'][0]['href'], rest_url( 'wp/v2/' . $post_type->rest_base . '/' . $data['id'] ) );

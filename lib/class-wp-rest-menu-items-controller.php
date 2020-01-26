@@ -261,7 +261,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'menu-item-description' => $menu_item_obj->description,
 				'menu-item-attr-title'  => $menu_item_obj->attr_title,
 				'menu-item-target'      => $menu_item_obj->target,
-				'menu-item-classes'     => implode( ' ', $menu_item_obj->classes ), // stored in the database as array.
+				'menu-item-classes'     => implode( ' ', $menu_item_obj->classes ),
 				'menu-item-xfn'         => $menu_item_obj->xfn,
 				'menu-item-status'      => $menu_item_obj->post_status,
 				'menu-id'               => $this->get_menu_id( $menu_item_db_id ),
@@ -284,7 +284,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'menu-item-xfn'         => '',
 				'menu-item-status'      => 'publish',
 			);
-		}
+		}//end if
 
 		$mapping = array(
 			'menu-item-db-id'       => 'id',
@@ -403,7 +403,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					return new WP_Error( 'invalid_item_parent', __( 'Invalid menu item parent.' ), array( 'status' => 400 ) );
 				}
 			}
-		}
+		}//end if
 
 		foreach ( array( 'menu-item-object-id', 'menu-item-parent-id' ) as $key ) {
 			// Note we need to allow negative-integer IDs for previewed objects not inserted yet.
@@ -438,7 +438,8 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		if ( '' !== $prepared_nav_item['menu-item-url'] ) {
 			$prepared_nav_item['menu-item-url'] = esc_url_raw( $prepared_nav_item['menu-item-url'] );
 			if ( '' === $prepared_nav_item['menu-item-url'] ) {
-				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) ); // Fail sanitization if URL is invalid.
+				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) );
+				// Fail sanitization if URL is invalid.
 			}
 		}
 		// Only draft / publish are valid post status for menu items.
@@ -498,18 +499,22 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'attr_title', $fields, true ) ) {
-			$data['attr_title'] = $menu_item->attr_title; // Same as post_excerpt.
+			$data['attr_title'] = $menu_item->attr_title;
+			// Same as post_excerpt.
 		}
 
 		if ( in_array( 'description', $fields, true ) ) {
-			$data['description'] = $menu_item->description; // Same as post_content.
+			$data['description'] = $menu_item->description;
+			// Same as post_content.
 		}
 
 		if ( in_array( 'type', $fields, true ) ) {
-			$data['type'] = $menu_item->type; // Using 'item_type' since 'type' already exists.
+			$data['type'] = $menu_item->type;
+			// Using 'item_type' since 'type' already exists.
 		}
 		if ( in_array( 'type_label', $fields, true ) ) {
-			$data['type_label'] = $menu_item->type_label; // Using 'item_type_label' to match up with 'item_type' - IS READ ONLY!
+			$data['type_label'] = $menu_item->type_label;
+			// Using 'item_type_label' to match up with 'item_type' - IS READ ONLY!
 		}
 
 		if ( in_array( 'object', $fields, true ) ) {
@@ -517,15 +522,18 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'object_id', $fields, true ) ) {
-			$data['object_id'] = absint( $menu_item->object_id ); // Usually is a string, but lets expose as an integer.
+			$data['object_id'] = absint( $menu_item->object_id );
+			// Usually is a string, but lets expose as an integer.
 		}
 
 		if ( in_array( 'parent', $fields, true ) ) {
-			$data['parent'] = absint( $menu_item->menu_item_parent ); // Same as post_parent, expose as integer.
+			$data['parent'] = absint( $menu_item->menu_item_parent );
+			// Same as post_parent, expose as integer.
 		}
 
 		if ( in_array( 'menu_order', $fields, true ) ) {
-			$data['menu_order'] = absint( $menu_item->menu_order ); // Same as post_parent, expose as integer.
+			$data['menu_order'] = absint( $menu_item->menu_order );
+			// Same as post_parent, expose as integer.
 		}
 
 		if ( in_array( 'menu_id', $fields, true ) ) {
@@ -623,7 +631,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					'embeddable' => true,
 				);
 			}
-		}
+		}//end if
 
 		return $links;
 	}
@@ -670,8 +678,10 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'type'        => 'object',
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'arg_options' => array(
-				'sanitize_callback' => null, // Note: sanitization implemented in self::prepare_item_for_database().
-				'validate_callback' => null, // Note: validation implemented in self::prepare_item_for_database().
+				'sanitize_callback' => null,
+				// Note: sanitization implemented in self::prepare_item_for_database().
+										'validate_callback' => null,
+		// Note: validation implemented in self::prepare_item_for_database().
 			),
 			'properties'  => array(
 				'raw'      => array(

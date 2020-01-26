@@ -160,7 +160,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$request  = new WP_REST_Request( 'GET', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
 
-		$this->check_get_menu_items_response( $response, 'view' );
+		$this->check_get_menu_item_response( $response, 'view' );
 	}
 
 	/**
@@ -207,7 +207,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$this->assertArrayHasKey( 'object', $properties );
 		$this->assertArrayHasKey( 'object_id', $properties );
 		$this->assertArrayHasKey( 'target', $properties );
-		$this->assertArrayHasKey( 'slug', $properties );
 		$this->assertArrayHasKey( 'parent', $properties );
 		$this->assertArrayHasKey( 'status', $properties );
 		$this->assertArrayHasKey( 'title', $properties );
@@ -352,7 +351,8 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 				$this->assertEquals( $post->post_parent, $data['parent'] );
 			} else {
 				$this->assertEquals( $post->post_parent, $data['parent']['id'] );
-				$this->check_get_menu_items_response( $data['parent'], get_post( $data['parent']['id'] ), 'view-parent' );
+				$menu_item = wp_setup_nav_menu_item( get_post( $data['parent']['id'] ) );
+				$this->check_get_menu_item_response( $data['parent'], $menu_item, 'view-parent' );
 			}
 		} else {
 			$this->assertEmpty( $data['parent'] );
@@ -384,5 +384,21 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 				$num++;
 			}
 		}
+	}
+
+	/**
+	 * @param $response
+	 * @param string $context
+	 */
+	protected function check_get_menu_item_response( $response, $context = 'view' ) {
+		$this->assertNotWPError( $response );
+		$response = rest_ensure_response( $response );
+		$this->assertEquals( 200, $response->get_status() );
+
+		$data = $response->get_data();
+		$post = get_post( $data['id'] );
+		$menu_item = wp_setup_nav_menu_item( $post );
+		$this->check_menu_item_data( $menu_item, $data, $context, $response->get_links() );
+
 	}
 }

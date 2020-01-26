@@ -48,6 +48,17 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	public function setUp() {
 		parent::setUp();
 		$this->menu_id = wp_create_nav_menu( rand_str() );
+
+		register_meta(
+			'term',
+			'test_single_menu',
+			array(
+				'object_subtype' => self::TAXONOMY,
+				'show_in_rest'   => true,
+				'single'         => true,
+				'type'           => 'string',
+			)
+		);
 	}
 
 	/**
@@ -182,9 +193,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param(
 			'meta',
 			array(
-				'test_single'     => 'just meta',
-				'test_tag_single' => 'tag-specific meta',
-				'test_cat_meta'   => 'category-specific meta',
+				'test_single_menu' => 'just meta',
+				'test_tag_single'  => 'tag-specific meta',
+				'test_cat_meta'    => 'category-specific meta',
 			)
 		);
 		$response = rest_get_server()->dispatch( $request );
@@ -193,7 +204,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( 'New Name', $data['name'] );
 		$this->assertEquals( 'New Description', $data['description'] );
 		$this->assertEquals( 'new-name', $data['slug'] );
-		$this->assertEquals( 'just meta', $data['meta']['test_single'] );
+		$this->assertEquals( 'just meta', $data['meta']['test_single_menu'] );
 		$this->assertEquals( 'tag-specific meta', $data['meta']['test_tag_single'] );
 		$this->assertFalse( isset( $data['meta']['test_cat_meta'] ) );
 	}
@@ -351,8 +362,8 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	protected function check_get_taxonomy_term_response( $response, $id ) {
 		$this->assertEquals( 200, $response->get_status() );
 
-		$data  = $response->get_data();
-		$menu  = get_term( $id, self::TAXONOMY );
+		$data = $response->get_data();
+		$menu = get_term( $id, self::TAXONOMY );
 		$this->check_taxonomy_term( $menu, $data, $response->get_links() );
 	}
 
@@ -366,7 +377,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $term->name, $data['name'] );
 		$this->assertEquals( $term->slug, $data['slug'] );
 		$this->assertEquals( $term->description, $data['description'] );
-		$this->assertEquals( $term->parent, $data['parent'] );
+		$this->assertFalse( isset( $term->parent ) );
 
 		$relations = array(
 			'self',

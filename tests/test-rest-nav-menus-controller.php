@@ -105,8 +105,14 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	 *
 	 */
 	public function test_get_items() {
-		$this->factory->menu->create();
-
+		$nav_menu_id = wp_update_nav_menu_object(
+			0,
+			array(
+				'description' => 'Test get',
+				'menu-name'   => 'test Name get',
+				'slug'        => 'test-slug-get',
+			)
+		);
 		$request = new WP_REST_Request( 'GET', '/wp/v2/menus' );
 		$request->set_param( 'per_page', self::$per_page );
 		$response = rest_get_server()->dispatch( $request );
@@ -336,6 +342,53 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $tags[0]->taxonomy, $data[0]['taxonomy'] );
 		$this->assertEquals( $tags[0]->description, $data[0]['description'] );
 		$this->assertEquals( $tags[0]->count, $data[0]['count'] );
+	}
+
+	/**
+	 * @param $response
+	 */
+	protected function check_get_taxonomy_term_response( $response ) {
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$data     = $response->get_data();
+		$menu = get_term( 1, self::TAXONOMY );
+		$this->check_taxonomy_term( $menu, $data, $response->get_links() );
+	}
+
+	/**
+	 * @param $term
+	 * @param $data
+	 * @param $links
+	 */
+	protected function check_taxonomy_term( $term, $data, $links ) {
+		$this->assertEquals( $term->term_id, $data['id'] );
+		$this->assertEquals( $term->name, $data['name'] );
+		$this->assertEquals( $term->slug, $data['slug'] );
+		$this->assertEquals( $term->description, $data['description'] );
+		$this->assertEquals( get_term_link( $term ), $data['link'] );
+		$this->assertEquals( $term->count, $data['count'] );
+		$taxonomy = get_taxonomy( $term->taxonomy );
+		if ( $taxonomy->hierarchical ) {
+			$this->assertEquals( $term->parent, $data['parent'] );
+		} else {
+			$this->assertFalse( isset( $term->parent ) );
+		}
+
+		$relations = array(
+			'self',
+			'collection',
+			'about',
+			'https://api.w.org/post_type',
+		);
+
+		if ( ! empty( $data['parent'] ) ) {
+			$relations[] = 'up';
+		}
+
+		$this->assertEqualSets( $relations, array_keys( $links ) );
+		$this->assertContains( 'wp/v2/taxonomies/' . $term->taxonomy, $links['about'][0]['href'] );
+		$this->assertEquals( add_query_arg( 'categories', $term->term_id, rest_url( 'wp/v2/posts' ) ), $links['https://api.w.org/post_type'][0]['href'] );
 	}
 
 }

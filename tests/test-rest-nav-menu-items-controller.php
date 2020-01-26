@@ -94,32 +94,25 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_registered_query_params() {
-		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
-		$response = rest_get_server()->dispatch( $request );
-		$data     = $response->get_data();
-		$keys     = array_keys( $data['endpoints'][0]['args'] );
-		sort( $keys );
-		$this->assertEquals(
-			array(
-				'after',
-				'before',
-				'context',
-				'exclude',
-				'include',
-				'menu_order',
-				'menus',
-				'menus_exclude',
-				'offset',
-				'order',
-				'orderby',
-				'page',
-				'per_page',
-				'search',
-				'slug',
-				'status',
-			),
-			$keys
-		);
+		$request    = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
+		$response   = rest_get_server()->dispatch( $request );
+		$data       = $response->get_data();
+		$properties = $data['endpoints'][0]['args'];
+		$this->assertArrayHasKey( 'before', $properties );
+		$this->assertArrayHasKey( 'context', $properties );
+		$this->assertArrayHasKey( 'exclude', $properties );
+		$this->assertArrayHasKey( 'include', $properties );
+		$this->assertArrayHasKey( 'menu_order', $properties );
+		$this->assertArrayHasKey( 'menus', $properties );
+		$this->assertArrayHasKey( 'menus_exclude', $properties );
+		$this->assertArrayHasKey( 'offset', $properties );
+		$this->assertArrayHasKey( 'order', $properties );
+		$this->assertArrayHasKey( 'orderby', $properties );
+		$this->assertArrayHasKey( 'page', $properties );
+		$this->assertArrayHasKey( 'per_page', $properties );
+		$this->assertArrayHasKey( 'search', $properties );
+		$this->assertArrayHasKey( 'slug', $properties );
+		$this->assertArrayHasKey( 'status', $properties );
 	}
 
 	/**

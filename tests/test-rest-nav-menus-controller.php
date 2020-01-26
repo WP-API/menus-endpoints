@@ -22,6 +22,11 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	const TAXONOMY = 'nav_menu';
 
 	/**
+	 * @var int
+	 */
+	protected static $per_page = 50;
+
+	/**
 	 * @param $factory
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
@@ -113,7 +118,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 				'slug'        => 'test-slug-get',
 			)
 		);
-		$request = new WP_REST_Request( 'GET', '/wp/v2/menus' );
+		$request     = new WP_REST_Request( 'GET', '/wp/v2/menus' );
 		$request->set_param( 'per_page', self::$per_page );
 		$response = rest_get_server()->dispatch( $request );
 		$this->check_get_taxonomy_terms_response( $response );
@@ -152,7 +157,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$headers = $response->get_headers();
 		$data    = $response->get_data();
 		$this->assertContains( '/wp/v2/menus/' . $data['id'], $headers['Location'] );
-		$this->assertEquals( 'My Awesome menu', $data['name'] );
+		$this->assertEquals( 'My Awesome menus', $data['name'] );
 		$this->assertEquals( 'This menu is so awesome.', $data['description'] );
 		$this->assertEquals( 'so-awesome', $data['slug'] );
 	}
@@ -234,11 +239,13 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 			)
 		);
 
-		$request  = new WP_REST_Request( 'GET', '/wp/v2/tags/' . $nav_menu_id );
+		$term = get_term_by( 'id', $nav_menu_id, self::TAXONOMY );
+
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $term->term_id );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
 
-		$this->check_taxonomy_term( $nav_menu_id, $data, $response->get_links() );
+		$this->check_taxonomy_term( $term, $data, $response->get_links() );
 	}
 
 	/**
@@ -348,10 +355,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	 * @param $response
 	 */
 	protected function check_get_taxonomy_term_response( $response ) {
-
 		$this->assertEquals( 200, $response->get_status() );
 
-		$data     = $response->get_data();
+		$data = $response->get_data();
 		$menu = get_term( 1, self::TAXONOMY );
 		$this->check_taxonomy_term( $menu, $data, $response->get_links() );
 	}

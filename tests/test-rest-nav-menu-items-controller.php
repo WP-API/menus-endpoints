@@ -326,11 +326,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		}
 
 		// page attributes
-		if ( $post_type_obj->hierarchical && post_type_supports( $post->post_type, 'page-attributes' ) ) {
-			$this->assertEquals( $post->menu_order, $data['menu_order'] );
-		} else {
-			$this->assertFalse( isset( $data['menu_order'] ) );
-		}
+		$this->assertEquals( $post->menu_order, $data['menu_order'] );
 
 		$taxonomies = wp_list_filter( get_object_taxonomies( $post->post_type, 'objects' ), array( 'show_in_rest' => true ) );
 		foreach ( $taxonomies as $taxonomy ) {

@@ -182,7 +182,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_update_item() {
-		wp_set_current_user( self::$editor_id );
+		wp_set_current_user( self::$admin_id );
 
 		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );

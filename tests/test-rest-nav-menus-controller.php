@@ -343,7 +343,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $tags[0]->name, $data[0]['name'] );
 		$this->assertEquals( $tags[0]->slug, $data[0]['slug'] );
 		$this->assertEquals( $tags[0]->description, $data[0]['description'] );
-		$this->assertEquals( $tags[0]->count, $data[0]['count'] );
 	}
 
 	/**
@@ -367,12 +366,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $term->name, $data['name'] );
 		$this->assertEquals( $term->slug, $data['slug'] );
 		$this->assertEquals( $term->description, $data['description'] );
-		$taxonomy = get_taxonomy( $term->taxonomy );
-		if ( $taxonomy->hierarchical ) {
-			$this->assertEquals( $term->parent, $data['parent'] );
-		} else {
-			$this->assertFalse( isset( $term->parent ) );
-		}
+		$this->assertEquals( $term->parent, $data['parent'] );
 
 		$relations = array(
 			'self',

@@ -95,7 +95,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $locations['primary'], $term_id );
 	}
 
-	public function test_create_item_with_location_permisson_incorrect() {
+	public function test_create_item_with_location_permission_incorrect() {
 		wp_set_current_user( self::$subscriber_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome Term' );
@@ -106,7 +106,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertErrorResponse( 'rest_cannot_assign_location', $response, rest_authorization_required_code() );
 	}
 
-	public function test_create_item_with_location_permisson_no_location() {
+	public function test_create_item_with_location_permission_no_location() {
 		wp_set_current_user( self::$admin_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome Term' );
@@ -130,7 +130,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( 400, $response->get_status() );
 	}
 
-	public function test_update_item_with_location_permisson_correct() {
+	public function test_update_item_with_location_permission_correct() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		wp_set_current_user( self::$admin_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
@@ -144,7 +144,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $locations['primary'], $this->menu_id );
 	}
 
-	public function test_update_item_with_location_permisson_incorrect() {
+	public function test_update_item_with_location_permission_incorrect() {
 		$this->register_nav_menu_locations( array( 'primary', 'secondary' ) );
 		wp_set_current_user( self::$subscriber_id );
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );

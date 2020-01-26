@@ -374,7 +374,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( $term->name, $data['name'] );
 		$this->assertEquals( $term->slug, $data['slug'] );
 		$this->assertEquals( $term->description, $data['description'] );
-		$this->assertFalse( isset( $term->parent ) );
 		$this->assertEquals( $term->parent, $data['parent'] );
 
 		$relations = array(

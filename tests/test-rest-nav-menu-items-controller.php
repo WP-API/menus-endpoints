@@ -256,27 +256,20 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 
 		// Standard fields
 		$this->assertEquals( $post->ID, $data['id'] );
-		if ( '0000-00-00 00:00:00' === $post->post_date_gmt ) {
-			$post_date_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_date ) - ( get_option( 'gmt_offset' ) * 3600 ) );
-			$this->assertEquals( mysql_to_rfc3339( $post_date_gmt ), $data['date_gmt'] );
-		} else {
-			$this->assertEquals( mysql_to_rfc3339( $post->post_date_gmt ), $data['date_gmt'] );
-		}
-		$this->assertEquals( mysql_to_rfc3339( $post->post_date ), $data['date'] );
+		$this->assertEquals( $post->post_content, $data['description'] );
 
-		if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
-			$post_modified_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_modified ) - ( get_option( 'gmt_offset' ) * 3600 ) );
-			$this->assertEquals( mysql_to_rfc3339( $post_modified_gmt ), $data['modified_gmt'] );
+		// Check filtered values.
+		if ( post_type_supports( $post->post_type, 'title' ) ) {
+			add_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
+			$this->assertEquals( get_the_title( $post->ID ), $data['title']['rendered'] );
+			remove_filter( 'protected_title_format', array( $this, 'protected_title_format' ) );
+			if ( 'edit' === $context ) {
+				$this->assertEquals( $post->post_title, $data['title']['raw'] );
+			} else {
+				$this->assertFalse( isset( $data['title']['raw'] ) );
+			}
 		} else {
-			$this->assertEquals( mysql_to_rfc3339( $post->post_modified_gmt ), $data['modified_gmt'] );
-		}
-		$this->assertEquals( mysql_to_rfc3339( $post->post_modified ), $data['modified'] );
-
-		// author
-		if ( post_type_supports( $post->post_type, 'author' ) ) {
-			$this->assertEquals( $post->post_author, $data['author'] );
-		} else {
-			$this->assertEmpty( $data['author'] );
+			$this->assertFalse( isset( $data['title'] ) );
 		}
 
 		// post_parent

@@ -245,7 +245,10 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$this->assertErrorResponse( 'rest_cannot_view', $response, 403 );
 	}
 
-
+	/**
+	 * @param $response
+	 * @param string $context
+	 */
 	protected function check_get_menu_items_response( $response, $context = 'view' ) {
 		$this->assertNotWPError( $response );
 		$response = rest_ensure_response( $response );
@@ -309,20 +312,17 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		}
 
 		// post_parent
-		if ( $post_type_obj->hierarchical ) {
-			$this->assertArrayHasKey( 'parent', $data );
-			if ( $post->post_parent ) {
-				if ( is_int( $data['parent'] ) ) {
-					$this->assertEquals( $post->post_parent, $data['parent'] );
-				} else {
-					$this->assertEquals( $post->post_parent, $data['parent']['id'] );
-					$this->check_get_post_response( $data['parent'], get_post( $data['parent']['id'] ), 'view-parent' );
-				}
+
+		$this->assertArrayHasKey( 'parent', $data );
+		if ( $post->post_parent ) {
+			if ( is_int( $data['parent'] ) ) {
+				$this->assertEquals( $post->post_parent, $data['parent'] );
 			} else {
-				$this->assertEmpty( $data['parent'] );
+				$this->assertEquals( $post->post_parent, $data['parent']['id'] );
+				$this->check_get_menu_items_response( $data['parent'], get_post( $data['parent']['id'] ), 'view-parent' );
 			}
 		} else {
-			$this->assertFalse( isset( $data['parent'] ) );
+			$this->assertEmpty( $data['parent'] );
 		}
 
 		// page attributes

@@ -5,6 +5,8 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	 * @var int
 	 */
 	public $menu_id;
+	public $tag_id;
+	public $menu_item_id;
 
 	/**
 	 * @var
@@ -20,6 +22,21 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	 * @param $factory
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
+		self::$tag_id = self::factory()->tag->create();
+
+		self::$menu_id = wp_create_nav_menu( rand_str() );
+
+		self::$menu_item_id = wp_update_nav_menu_item(
+			self::$menu_id,
+			0,
+			array(
+				'menu-item-type'      => 'taxonomy',
+				'menu-item-object'    => 'post_tag',
+				'menu-item-object-id' => self::$tag_id,
+				'menu-item-status'    => 'publish',
+			)
+		);
+
 		self::$admin_id      = $factory->user->create(
 			array(
 				'role' => 'administrator',
@@ -37,7 +54,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	 */
 	public function setUp() {
 		parent::setUp();
-		$this->menu_id = wp_create_nav_menu( rand_str() );
 	}
 
 	/**
@@ -60,7 +76,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
 		$this->assertEquals( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
 		// Single
-		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items/' . self::$post_id );
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items/' . self::$menu_item_id );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
 		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
@@ -102,7 +118,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	}
 
 	public function test_registered_get_item_params() {
-		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
 		$keys     = array_keys( $data['endpoints'][0]['args'] );
@@ -114,7 +130,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	 * @ticket 43701
 	 */
 	public function test_allow_header_sent_on_options_request() {
-		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
 		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
 		$headers  = $response->get_headers();
@@ -124,7 +140,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 
 		wp_set_current_user( self::$admin_id );
 
-		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
 		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
 		$headers  = $response->get_headers();

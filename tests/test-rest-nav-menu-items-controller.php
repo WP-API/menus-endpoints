@@ -160,7 +160,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$request  = new WP_REST_Request( 'GET', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
 		$response = rest_get_server()->dispatch( $request );
 
-		$this->check_get_post_response( $response, 'view' );
+		$this->check_get_menu_items_response( $response, 'view' );
 	}
 
 	/**
@@ -191,6 +191,29 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_get_item_schema() {
+		$request    = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
+		$response   = rest_get_server()->dispatch( $request );
+		$data       = $response->get_data();
+		$properties = $data['schema']['properties'];
+		$this->assertEquals( 18, count( $properties ) );
+		$this->assertArrayHasKey( 'type_label', $properties );
+		$this->assertArrayHasKey( 'attr_title', $properties );
+		$this->assertArrayHasKey( 'classes', $properties );
+		$this->assertArrayHasKey( 'description', $properties );
+		$this->assertArrayHasKey( 'id', $properties );
+		$this->assertArrayHasKey( 'url', $properties );
+		$this->assertArrayHasKey( 'meta', $properties );
+		$this->assertArrayHasKey( 'menu_order', $properties );
+		$this->assertArrayHasKey( 'object', $properties );
+		$this->assertArrayHasKey( 'object_id', $properties );
+		$this->assertArrayHasKey( 'target', $properties );
+		$this->assertArrayHasKey( 'slug', $properties );
+		$this->assertArrayHasKey( 'parent', $properties );
+		$this->assertArrayHasKey( 'status', $properties );
+		$this->assertArrayHasKey( 'title', $properties );
+		$this->assertArrayHasKey( 'type', $properties );
+		$this->assertArrayHasKey( 'xfn', $properties );
+		$this->assertArrayHasKey( '_invalid', $properties );
 	}
 
 	/**

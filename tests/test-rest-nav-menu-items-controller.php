@@ -137,29 +137,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @ticket 43701
-	 */
-	public function test_allow_header_sent_on_options_request() {
-		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
-		$response = rest_get_server()->dispatch( $request );
-		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
-		$headers  = $response->get_headers();
-
-		$this->assertNotEmpty( $headers['Allow'] );
-		$this->assertEquals( $headers['Allow'], 'GET' );
-
-		wp_set_current_user( self::$admin_id );
-
-		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
-		$response = rest_get_server()->dispatch( $request );
-		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
-		$headers  = $response->get_headers();
-
-		$this->assertNotEmpty( $headers['Allow'] );
-		$this->assertEquals( $headers['Allow'], 'GET, POST, PUT, PATCH, DELETE' );
-	}
-
-	/**
 	 *
 	 */
 	public function test_get_items() {
@@ -279,7 +256,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 
 		// Standard fields
 		$this->assertEquals( $post->ID, $data['id'] );
-		$this->assertEquals( $post->post_name, $data['slug'] );
 		$this->assertEquals( get_permalink( $post->ID ), $data['link'] );
 		if ( '0000-00-00 00:00:00' === $post->post_date_gmt ) {
 			$post_date_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_date ) - ( get_option( 'gmt_offset' ) * 3600 ) );

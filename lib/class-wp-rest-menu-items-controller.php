@@ -499,22 +499,23 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'attr_title', $fields, true ) ) {
-			$data['attr_title'] = $menu_item->attr_title;
 			// Same as post_excerpt.
+			$data['attr_title'] = $menu_item->attr_title;
 		}
 
 		if ( in_array( 'description', $fields, true ) ) {
-			$data['description'] = $menu_item->description;
 			// Same as post_content.
+			$data['description'] = $menu_item->description;
 		}
 
 		if ( in_array( 'type', $fields, true ) ) {
-			$data['type'] = $menu_item->type;
 			// Using 'item_type' since 'type' already exists.
+			$data['type'] = $menu_item->type;
 		}
+
 		if ( in_array( 'type_label', $fields, true ) ) {
-			$data['type_label'] = $menu_item->type_label;
 			// Using 'item_type_label' to match up with 'item_type' - IS READ ONLY!
+			$data['type_label'] = $menu_item->type_label;
 		}
 
 		if ( in_array( 'object', $fields, true ) ) {
@@ -522,18 +523,18 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'object_id', $fields, true ) ) {
-			$data['object_id'] = absint( $menu_item->object_id );
 			// Usually is a string, but lets expose as an integer.
+			$data['object_id'] = absint( $menu_item->object_id );
 		}
 
 		if ( in_array( 'parent', $fields, true ) ) {
-			$data['parent'] = absint( $menu_item->menu_item_parent );
 			// Same as post_parent, expose as integer.
+			$data['parent'] = absint( $menu_item->menu_item_parent );
 		}
 
 		if ( in_array( 'menu_order', $fields, true ) ) {
-			$data['menu_order'] = absint( $menu_item->menu_order );
 			// Same as post_parent, expose as integer.
+			$data['menu_order'] = absint( $menu_item->menu_order );
 		}
 
 		if ( in_array( 'menu_id', $fields, true ) ) {
@@ -678,10 +679,10 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'type'        => 'object',
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'arg_options' => array(
-				'sanitize_callback' => null,
 				// Note: sanitization implemented in self::prepare_item_for_database().
-										'validate_callback' => null,
-		// Note: validation implemented in self::prepare_item_for_database().
+				'sanitize_callback' => null,
+				// Note: validation implemented in self::prepare_item_for_database().
+				'validate_callback' => null,
 			),
 			'properties'  => array(
 				'raw'      => array(

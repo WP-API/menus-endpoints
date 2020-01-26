@@ -193,7 +193,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request->set_param(
 			'meta',
 			array(
-				'test_single_menu' => 'just meta'
+				'test_single_menu' => 'just meta',
 			)
 		);
 		$response = rest_get_server()->dispatch( $request );

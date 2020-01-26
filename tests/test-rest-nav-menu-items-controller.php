@@ -44,18 +44,101 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Controller_Tes
 	 *
 	 */
 	public function test_register_routes() {
+		$routes = rest_get_server()->get_routes();
+
+		$this->assertArrayHasKey( '/wp/v2/menu-items', $routes );
+		$this->assertCount( 2, $routes['/wp/v2/menu-items'] );
+		$this->assertArrayHasKey( '/wp/v2/menu-items/(?P<id>[\d]+)', $routes );
+		$this->assertCount( 3, $routes['/wp/v2/menu-items/(?P<id>[\d]+)'] );
 	}
 
-	/**
-	 *
-	 */
 	public function test_context_param() {
+		// Collection
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
+		$this->assertEquals( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
+		// Single
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items/' . self::$post_id );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
+		$this->assertEquals( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
+	}
+
+	public function test_registered_query_params() {
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$keys     = array_keys( $data['endpoints'][0]['args'] );
+		sort( $keys );
+		$this->assertEquals(
+			array(
+				'after',
+				'author',
+				'author_exclude',
+				'before',
+				'categories',
+				'categories_exclude',
+				'context',
+				'exclude',
+				'include',
+				'offset',
+				'order',
+				'orderby',
+				'page',
+				'per_page',
+				'search',
+				'slug',
+				'status',
+				'sticky',
+				'tags',
+				'tags_exclude',
+				'tax_relation',
+			),
+			$keys
+		);
+	}
+
+	public function test_registered_get_item_params() {
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$keys     = array_keys( $data['endpoints'][0]['args'] );
+		sort( $keys );
+		$this->assertEquals( array( 'context', 'id', 'password' ), $keys );
 	}
 
 	/**
-	 *
+	 * @ticket 43701
 	 */
+	public function test_allow_header_sent_on_options_request() {
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$response = rest_get_server()->dispatch( $request );
+		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
+		$headers  = $response->get_headers();
+
+		$this->assertNotEmpty( $headers['Allow'] );
+		$this->assertEquals( $headers['Allow'], 'GET' );
+
+		wp_set_current_user( self::$admin_id );
+
+		$request  = new WP_REST_Request( 'OPTIONS', sprintf( '/wp/v2/menu-items/%d', self::$post_id ) );
+		$response = rest_get_server()->dispatch( $request );
+		$response = apply_filters( 'rest_post_dispatch', $response, rest_get_server(), $request );
+		$headers  = $response->get_headers();
+
+		$this->assertNotEmpty( $headers['Allow'] );
+		$this->assertEquals( $headers['Allow'], 'GET, POST, PUT, PATCH, DELETE' );
+	}
+
 	public function test_get_items() {
+		wp_set_current_user( self::$admin_id );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/menu-items' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->check_get_posts_response( $response );
 	}
 
 	/**

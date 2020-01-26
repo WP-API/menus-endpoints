@@ -96,7 +96,6 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		$prepared_nav_item = (array) $prepared_nav_item;
 
 		$nav_menu_item_id = wp_update_nav_menu_item( $prepared_nav_item['menu-id'], $prepared_nav_item['menu-item-db-id'], $prepared_nav_item );
-
 		if ( is_wp_error( $nav_menu_item_id ) ) {
 			if ( 'db_insert_error' === $nav_menu_item_id->get_error_code() ) {
 				$nav_menu_item_id->add_data( array( 'status' => 500 ) );
@@ -311,6 +310,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'menu-item-description' => $menu_item_obj->description,
 				'menu-item-attr-title'  => $menu_item_obj->attr_title,
 				'menu-item-target'      => $menu_item_obj->target,
+				// stored in the database as array.
 				'menu-item-classes'     => implode( ' ', $menu_item_obj->classes ),
 				'menu-item-xfn'         => $menu_item_obj->xfn,
 				'menu-item-status'      => $menu_item_obj->post_status,
@@ -377,11 +377,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		// Check if object id exists before saving.
-		if ( ! $prepared_nav_item['menu-item-object'] && $prepared_nav_item['menu-item-object-id'] ) {
+		if ( ! $prepared_nav_item['menu-item-object'] ) {
 			// If taxonony, check if term exists.
 			if ( 'taxonomy' === $prepared_nav_item['menu-item-type'] ) {
 				$original = get_term( absint( $prepared_nav_item['menu-item-object-id'] ) );
-				if ( empty( $original ) ) {
+				if ( empty( $original ) || is_wp_error( $original ) ) {
 					return new WP_Error( 'rest_term_invalid_id', __( 'Invalid term ID.' ), array( 'status' => 400 ) );
 				}
 				$prepared_nav_item['menu-item-object'] = get_term_field( 'taxonomy', $original );
@@ -488,8 +488,8 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		if ( '' !== $prepared_nav_item['menu-item-url'] ) {
 			$prepared_nav_item['menu-item-url'] = esc_url_raw( $prepared_nav_item['menu-item-url'] );
 			if ( '' === $prepared_nav_item['menu-item-url'] ) {
-				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) );
 				// Fail sanitization if URL is invalid.
+				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) );
 			}
 		}
 		// Only draft / publish are valid post status for menu items.
@@ -524,7 +524,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		// Base fields for every post.
 		$menu_item = wp_setup_nav_menu_item( $post );
-
+		$data = array();
 		if ( in_array( 'id', $fields, true ) ) {
 			$data['id'] = $menu_item->ID;
 		}
@@ -600,7 +600,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		if ( in_array( 'xfn', $fields, true ) ) {
-			$data['xfn'] = (array) $menu_item->xfn;
+			$data['xfn'] = array_map( 'sanitize_html_class', explode( ' ',  $menu_item->xfn  ) );
 		}
 
 		if ( in_array( 'meta', $fields, true ) ) {

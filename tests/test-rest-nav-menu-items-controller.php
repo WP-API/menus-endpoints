@@ -63,13 +63,6 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	/**
 	 *
 	 */
-	public function setUp() {
-		parent::setUp();
-	}
-
-	/**
-	 *
-	 */
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
 
@@ -181,25 +174,183 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	/**
 	 *
 	 */
+	public function test_create_item_invalid_term() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data( array(
+			'type'  => 'taxonomy',
+			'title' => 'Tags',
+		) );
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_term_invalid_id', $response, 400 );
+	}
+
+	/**
+	 *
+	 */
+	public function test_create_item_invalid_post() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data( array(
+			'type'  => 'post_type',
+			'title' => 'Post',
+		) );
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_post_invalid_id', $response, 400 );
+	}
+
+	/**
+	 *
+	 */
+	public function test_create_item_invalid_post_type() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data( array(
+			'type'  => 'post_type_archive',
+			'menu-item-object' => 'invalid_post_type',
+		) );
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_post_invalid_type', $response, 400 );
+	}
+
+	/**
+	 *
+	 */
+	public function test_create_item_invalid_custom_link() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data( array(
+			'type'  => 'custom',
+			'title' => '',
+		) );
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_title_required', $response, 400 );
+	}
+
+	/**
+	 *
+	 */
+	public function test_create_item_invalid_custom_link_url() {
+		wp_set_current_user( self::$admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data( array(
+			'type'  => 'custom',
+			'url' => '',
+		) );
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_url_required', $response, 400 );
+	}
+
+	/**
+	 *
+	 */
 	public function test_update_item() {
 		wp_set_current_user( self::$admin_id );
 
-		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', self::$menu_item_id ) );
+		$post_id      = self::factory()->post->create();
+		$menu_item_id = wp_update_nav_menu_item(
+			$this->menu_id,
+			0,
+			array(
+				'menu-item-type'      => 'post_type',
+				'menu-item-object'    => 'post',
+				'menu-item-object-id' => $post_id,
+				'menu-item-status'    => 'publish',
+			)
+		);
+
+		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', $menu_item_id ) );
 		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
-		$params = $this->set_menu_item_data();
+		$params = $this->set_menu_item_data(array(
+			'xfn' => array( 'test1', 'test2', 'test3')
+		));
 		$request->set_body_params( $params );
 		$response = rest_get_server()->dispatch( $request );
 		$this->check_update_menu_item_response( $response );
 		$new_data = $response->get_data();
-		$this->assertEquals( self::$menu_item_id, $new_data['id'] );
+		$this->assertEquals( $menu_item_id, $new_data['id'] );
 		$this->assertEquals( $params['title'], $new_data['title']['raw'] );
 		$this->assertEquals( $params['description'], $new_data['description'] );
 		$this->assertEquals( $params['type_label'], $new_data['type_label'] );
-		$post      = get_post( self::$menu_item_id );
+		$this->assertEquals( $params['xfn'], $new_data['xfn'] );
+		$post      = get_post( $menu_item_id );
 		$menu_item = wp_setup_nav_menu_item( $post );
 		$this->assertEquals( $params['title'], $menu_item->title );
 		$this->assertEquals( $params['description'], $menu_item->description );
-		$this->assertEquals( $params['type_label'], $menu_item->type_label );
+		$this->assertEquals( $params['xfn'], explode(' ', $menu_item->xfn ));
+	}
+
+	/**
+	 *
+	 */
+	public function test_update_item_clean_xfn() {
+		wp_set_current_user( self::$admin_id );
+
+		$post_id      = self::factory()->post->create();
+		$menu_item_id = wp_update_nav_menu_item(
+			$this->menu_id,
+			0,
+			array(
+				'menu-item-type'      => 'post_type',
+				'menu-item-object'    => 'post',
+				'menu-item-object-id' => $post_id,
+				'menu-item-status'    => 'publish',
+			)
+		);
+
+		$bad_data = array( 'test1":|":', 'test2+|+', 'test3±',  'test4😀');
+		$good_data = array( 'test1', 'test2', 'test3',  'test4');
+
+		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', $menu_item_id ) );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data(array(
+			'xfn' => $bad_data
+		));
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->check_update_menu_item_response( $response );
+		$new_data = $response->get_data();
+		$this->assertEquals( $menu_item_id, $new_data['id'] );
+		$this->assertEquals( $params['title'], $new_data['title']['raw'] );
+		$this->assertEquals( $params['description'], $new_data['description'] );
+		$this->assertEquals( $params['type_label'], $new_data['type_label'] );
+		$this->assertEquals( $good_data, $new_data['xfn'] );
+		$post      = get_post( $menu_item_id );
+		$menu_item = wp_setup_nav_menu_item( $post );
+		$this->assertEquals( $params['title'], $menu_item->title );
+		$this->assertEquals( $params['description'], $menu_item->description );
+		$this->assertEquals( $good_data, explode(' ', $menu_item->xfn ));
+	}
+
+
+	/**
+	 *
+	 */
+	public function test_update_item_invalid() {
+		wp_set_current_user( self::$admin_id );
+		$post_id      = self::factory()->post->create();
+
+		$request = new WP_REST_Request( 'PUT', sprintf( '/wp/v2/menu-items/%d', $post_id ) );
+		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$params = $this->set_menu_item_data();
+		$request->set_body_params( $params );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertErrorResponse( 'rest_post_invalid_id', $response, 404 );
 	}
 
 	/**

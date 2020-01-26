@@ -8,8 +8,8 @@
 	<exclude-pattern>/node_modules/</exclude-pattern>
 
     <rule ref="Generic.Commenting">
-		<exclude-pattern>tests/*</exclude-pattern>
-	</rule>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
 
     <rule ref="Squiz.Commenting">
         <exclude-pattern>tests/*</exclude-pattern>

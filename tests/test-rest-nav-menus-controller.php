@@ -110,12 +110,12 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	 *
 	 */
 	public function test_get_items() {
+		wp_set_current_user( self::$admin_id );
 		$nav_menu_id = wp_update_nav_menu_object(
 			0,
 			array(
 				'description' => 'Test get',
-				'menu-name'   => 'test Name get',
-				'slug'        => 'test-slug-get',
+				'menu-name'   => 'test Name get'
 			)
 		);
 		$request     = new WP_REST_Request( 'GET', '/wp/v2/menus' );
@@ -134,7 +134,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 			array(
 				'description' => 'Test menu',
 				'menu-name'   => 'test Name',
-				'slug'        => 'test-slug',
 			)
 		);
 		$request     = new WP_REST_Request( 'GET', '/wp/v2/menus/' . $nav_menu_id );
@@ -151,7 +150,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus' );
 		$request->set_param( 'name', 'My Awesome menus' );
 		$request->set_param( 'description', 'This menu is so awesome.' );
-		$request->set_param( 'slug', 'so-awesome' );
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 201, $response->get_status() );
 		$headers = $response->get_headers();
@@ -173,7 +171,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 			array(
 				'description' => 'Original Description',
 				'menu-name'   => 'Original Name',
-				'slug'        => 'original-slug',
 			)
 		);
 
@@ -182,7 +179,6 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $term->term_id );
 		$request->set_param( 'name', 'New Name' );
 		$request->set_param( 'description', 'New Description' );
-		$request->set_param( 'slug', 'new-slug' );
 		$request->set_param(
 			'meta',
 			array(
@@ -196,7 +192,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$data = $response->get_data();
 		$this->assertEquals( 'New Name', $data['name'] );
 		$this->assertEquals( 'New Description', $data['description'] );
-		$this->assertEquals( 'new-slug', $data['slug'] );
+		$this->assertEquals( 'new-name', $data['slug'] );
 		$this->assertEquals( 'just meta', $data['meta']['test_single'] );
 		$this->assertEquals( 'tag-specific meta', $data['meta']['test_tag_single'] );
 		$this->assertFalse( isset( $data['meta']['test_cat_meta'] ) );

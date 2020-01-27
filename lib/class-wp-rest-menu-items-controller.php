@@ -837,7 +837,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			'minimum'     => 0,
 			'default'     => 0,
 		);
-		$schema['properties']['object'] = array(
+		$schema['properties']['object']     = array(
 			'description' => __( 'The type of object originally represented, such as "category," "post", or "attachment."' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'string',

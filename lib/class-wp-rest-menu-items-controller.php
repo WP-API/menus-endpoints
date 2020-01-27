@@ -759,13 +759,12 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['id'] = array(
-			'description'       => __( 'Unique identifier for the object.' ),
-			'type'              => 'integer',
-			'validate_callback' => 'rest_validate_request_arg',
-			'default'           => 0,
-			'minimum'           => 0,
-			'context'           => array( 'view', 'edit', 'embed' ),
-			'readonly'          => true,
+			'description' => __( 'Unique identifier for the object.' ),
+			'type'        => 'integer',
+			'default'     => 0,
+			'minimum'     => 0,
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'readonly'    => true,
 		);
 
 		$schema['properties']['type_label'] = array(
@@ -792,12 +791,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['parent'] = array(
-			'description'       => __( 'The ID for the parent of the object.' ),
-			'type'              => 'integer',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 0,
-			'default'           => 0,
-			'context'           => array( 'view', 'edit', 'embed' ),
+			'description' => __( 'The ID for the parent of the object.' ),
+			'type'        => 'integer',
+			'minimum'     => 0,
+			'default'     => 0,
+			'context'     => array( 'view', 'edit', 'embed' ),
 		);
 
 		$schema['properties']['attr_title'] = array(
@@ -833,26 +831,24 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['menu_order'] = array(
-			'description'       => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
-			'context'           => array( 'view', 'edit', 'embed' ),
-			'type'              => 'integer',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 0,
-			'default'           => 0,
+			'description' => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'type'        => 'integer',
+			'minimum'     => 0,
+			'default'     => 0,
 		);
-		$schema['properties']['object']     = array(
+		$schema['properties']['object'] = array(
 			'description' => __( 'The type of object originally represented, such as "category," "post", or "attachment."' ),
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'type'        => 'string',
 		);
 
 		$schema['properties']['object_id'] = array(
-			'description'       => __( 'The DB ID of the original object this menu item represents, e . g . ID for posts and term_id for categories .' ),
-			'context'           => array( 'view', 'edit', 'embed' ),
-			'type'              => 'integer',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 0,
-			'default'           => 0,
+			'description' => __( 'The DB ID of the original object this menu item represents, e . g . ID for posts and term_id for categories .' ),
+			'context'     => array( 'view', 'edit', 'embed' ),
+			'type'        => 'integer',
+			'minimum'     => 0,
+			'default'     => 0,
 		);
 
 		$schema['properties']['target'] = array(
@@ -915,8 +911,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			);
 
 			if ( 'nav_menu' === $taxonomy->name ) {
-				$schema['properties'][ $base ]['type']     = 'integer';
-				$schema['properties'][ $base ]['required'] = true;
+				$schema['properties'][ $base ]['type'] = 'integer';
 				unset( $schema['properties'][ $base ]['items'] );
 			}
 		}

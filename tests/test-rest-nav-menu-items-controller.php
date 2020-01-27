@@ -317,7 +317,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
 		$params = $this->set_menu_item_data(
 			array(
-				'menus' => $new_menu_id,
+				'menus'  => $new_menu_id,
 				'parent' => $this->menu_item_id,
 			)
 		);
@@ -332,7 +332,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	public function test_create_item_invalid_parent_post() {
 		wp_set_current_user( self::$admin_id );
 		$post_id = self::factory()->post->create();
-		$request     = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
 		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
 		$params = $this->set_menu_item_data(
 			array(
@@ -349,11 +349,11 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 */
 	public function test_create_item_invalid_menu() {
 		wp_set_current_user( self::$admin_id );
-		$request     = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menu-items' );
 		$request->add_header( 'content-type', 'application/x-www-form-urlencoded' );
 		$params = $this->set_menu_item_data(
 			array(
-				'menus'      => -9,
+				'menus' => -9,
 			)
 		);
 		$request->set_body_params( $params );

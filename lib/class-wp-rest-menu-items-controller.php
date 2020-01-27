@@ -356,6 +356,11 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 
 		foreach ( $mapping as $original => $api_request ) {
 			if ( ! empty( $schema['properties'][ $api_request ] ) && isset( $request[ $api_request ] ) ) {
+				$check = rest_validate_value_from_schema( $request[ $api_request ], $schema['properties'][ $api_request ] );
+				if ( is_wp_error( $check ) ) {
+					$check->add_data( array( 'status' => 400 ) );
+					return $check;
+				}
 				$prepared_nav_item[ $original ] = rest_sanitize_value_from_schema( $request[ $api_request ], $schema['properties'][ $api_request ] );
 			}
 		}
@@ -423,13 +428,17 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			}
 
 			// If menu item position is set to 0, insert as the last item in the existing menu.
-			$menu_items = (array) wp_get_nav_menu_items( $prepared_nav_item['menu-id'], array( 'post_status' => 'publish,draft' ) );
+			$menu_items = wp_get_nav_menu_items( $prepared_nav_item['menu-id'], array( 'post_status' => 'publish,draft' ) );
 			if ( 0 === (int) $prepared_nav_item['menu-item-position'] ) {
-				$last_item = array_pop( $menu_items );
-				if ( $last_item && isset( $last_item->menu_order ) ) {
-					$prepared_nav_item['menu-item-position'] = $last_item->menu_order + 1;
+				if ( $menu_items ) {
+					$last_item = array_pop( $menu_items );
+					if ( $last_item && isset( $last_item->menu_order ) ) {
+						$prepared_nav_item['menu-item-position'] = $last_item->menu_order + 1;
+					} else {
+						$prepared_nav_item['menu-item-position'] = count( $menu_items );
+					}
 				} else {
-					$prepared_nav_item['menu-item-position'] = count( $menu_items );
+					$prepared_nav_item['menu-item-position'] = 1;
 				}
 			}
 
@@ -449,7 +458,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				if ( ! is_nav_menu_item( $prepared_nav_item['menu-item-parent-id'] ) ) {
 					return new WP_Error( 'invalid_menu_item_parent', __( 'Invalid menu item parent.' ), array( 'status' => 400 ) );
 				}
-				if ( $menu_item_ids && ! in_array( $prepared_nav_item['menu-item-parent-id'], $menu_item_ids, true ) ) {
+				if ( ! $menu_item_ids || ! in_array( $prepared_nav_item['menu-item-parent-id'], $menu_item_ids, true ) ) {
 					return new WP_Error( 'invalid_item_parent', __( 'Invalid menu item parent.' ), array( 'status' => 400 ) );
 				}
 			}
@@ -750,12 +759,13 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['id'] = array(
-			'description' => __( 'Unique identifier for the object.' ),
-			'type'        => 'integer',
-			'default'     => 0,
-			'minimum'     => 0,
-			'context'     => array( 'view', 'edit', 'embed' ),
-			'readonly'    => true,
+			'description'       => __( 'Unique identifier for the object.' ),
+			'type'              => 'integer',
+			'validate_callback' => 'rest_validate_request_arg',
+			'default'           => 0,
+			'minimum'           => 0,
+			'context'           => array( 'view', 'edit', 'embed' ),
+			'readonly'          => true,
 		);
 
 		$schema['properties']['type_label'] = array(
@@ -782,11 +792,12 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['parent'] = array(
-			'description' => __( 'The ID for the parent of the object.' ),
-			'type'        => 'integer',
-			'minimum'     => 0,
-			'default'     => 0,
-			'context'     => array( 'view', 'edit', 'embed' ),
+			'description'       => __( 'The ID for the parent of the object.' ),
+			'type'              => 'integer',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 0,
+			'default'           => 0,
+			'context'           => array( 'view', 'edit', 'embed' ),
 		);
 
 		$schema['properties']['attr_title'] = array(
@@ -822,11 +833,12 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['menu_order'] = array(
-			'description' => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
-			'type'        => 'integer',
-			'minimum'     => 0,
-			'default'     => 0,
+			'description'       => __( 'The DB ID of the nav_menu_item that is this item\'s menu parent, if any . 0 otherwise . ' ),
+			'context'           => array( 'view', 'edit', 'embed' ),
+			'type'              => 'integer',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 0,
+			'default'           => 0,
 		);
 		$schema['properties']['object']     = array(
 			'description' => __( 'The type of object originally represented, such as "category," "post", or "attachment."' ),
@@ -835,11 +847,12 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		);
 
 		$schema['properties']['object_id'] = array(
-			'description' => __( 'The DB ID of the original object this menu item represents, e . g . ID for posts and term_id for categories .' ),
-			'context'     => array( 'view', 'edit', 'embed' ),
-			'type'        => 'integer',
-			'minimum'     => 0,
-			'default'     => 0,
+			'description'       => __( 'The DB ID of the original object this menu item represents, e . g . ID for posts and term_id for categories .' ),
+			'context'           => array( 'view', 'edit', 'embed' ),
+			'type'              => 'integer',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 0,
+			'default'           => 0,
 		);
 
 		$schema['properties']['target'] = array(
@@ -901,8 +914,9 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'context'     => array( 'view', 'edit' ),
 			);
 
-			if ( 'nav_menu' === $taxonomy ) {
-				$schema['properties'][ $base ]['type'] = 'integer';
+			if ( 'nav_menu' === $taxonomy->name ) {
+				$schema['properties'][ $base ]['type']     = 'integer';
+				$schema['properties'][ $base ]['required'] = true;
 				unset( $schema['properties'][ $base ]['items'] );
 			}
 		}
@@ -988,6 +1002,41 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 		}
 
 		return $query_args;
+	}
+
+	/**
+	 * Checks whether current user can assign all terms sent with the current request.
+	 *
+	 * @param WP_REST_Request $request The request object with post and terms data.
+	 *
+	 * @return bool Whether the current user can assign the provided terms.
+	 */
+	protected function check_assign_terms_permission( $request ) {
+		$taxonomies = wp_list_filter( get_object_taxonomies( $this->post_type, 'objects' ), array( 'show_in_rest' => true ) );
+		foreach ( $taxonomies as $taxonomy ) {
+			$base = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
+
+			if ( ! isset( $request[ $base ] ) ) {
+				continue;
+			}
+
+			foreach ( (array) $request[ $base ] as $term_id ) {
+				if ( ! $term_id ) {
+					continue;
+				}
+
+				// Invalid terms will be rejected later.
+				if ( ! get_term( $term_id, $taxonomy->name ) ) {
+					continue;
+				};
+
+				if ( ! current_user_can( 'assign_term', (int) $term_id ) ) {
+					return false;
+				}
+			}
+		}//end foreach
+
+		return true;
 	}
 
 	/**

@@ -1029,7 +1029,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					return false;
 				}
 			}
-		}//end foreach
+		}
 
 		return true;
 	}

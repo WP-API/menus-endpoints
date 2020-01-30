@@ -1,5 +1,16 @@
 <?php
+/**
+ * REST API: WP_Test_REST_Nav_Menus_Controller class
+ *
+ * @package    WordPress
+ * @subpackage REST_API
+ */
 
+/**
+ * Tests for REST API for Menus.
+ *
+ * @see WP_Test_REST_Controller_Testcase
+ */
 class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase {
 	/**
 	 * @var int
@@ -7,12 +18,12 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	public $menu_id;
 
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected static $admin_id;
 
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected static $subscriber_id;
 
@@ -27,7 +38,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	protected static $per_page = 50;
 
 	/**
-	 * @param $factory
+	 * Create fake data before our tests run.
+	 *
+	 * @param WP_UnitTest_Factory $factory Helper that lets us create fake data.
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$admin_id      = $factory->user->create(
@@ -74,13 +87,13 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	 *
 	 */
 	public function test_context_param() {
-		// Collection
+		// Collection.
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menus' );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
 		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
 		$this->assertEqualSets( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
-		// Single
+		// Single.
 		$tag1     = $this->factory->tag->create( array( 'name' => 'Season 5' ) );
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menus/' . $tag1 );
 		$response = rest_get_server()->dispatch( $request );
@@ -337,7 +350,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	}
 
 	/**
-	 * @param $response
+	 * @param WP_REST_Response $response Response Class.
 	 */
 	protected function check_get_taxonomy_terms_response( $response ) {
 		$this->assertEquals( 200, $response->get_status() );
@@ -354,7 +367,8 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	}
 
 	/**
-	 * @param $response
+	 * @param WP_REST_Response $response Response Class.
+	 * @param int              $id Term ID.
 	 */
 	protected function check_get_taxonomy_term_response( $response, $id ) {
 		$this->assertEquals( 200, $response->get_status() );
@@ -365,9 +379,9 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	}
 
 	/**
-	 * @param $term
-	 * @param $data
-	 * @param $links
+	 * @param WP_Term $term WP_Term object.
+	 * @param array   $data Data from REST API.
+	 * @param array   $links Array of links.
 	 */
 	protected function check_taxonomy_term( $term, $data, $links ) {
 		$this->assertEquals( $term->term_id, $data['id'] );

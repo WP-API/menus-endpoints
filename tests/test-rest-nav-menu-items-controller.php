@@ -1,26 +1,37 @@
 <?php
+/**
+ * REST API: WP_Test_REST_Nav_Menu_Items_Controller class
+ *
+ * @package    WordPress
+ * @subpackage REST_API
+ */
 
+/**
+ * Tests for REST API for Menu items.
+ *
+ * @see WP_Test_REST_Post_Type_Controller_Testcase
+ */
 class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Controller_Testcase {
 	/**
 	 * @var int
 	 */
 	protected $menu_id;
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected $tag_id;
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected $menu_item_id;
 
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected static $admin_id;
 
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected static $subscriber_id;
 
@@ -30,7 +41,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	const POST_TYPE = 'nav_menu_item';
 
 	/**
-	 * @param $factory
+	 * Create fake data before our tests run.
+	 *
+	 * @param WP_UnitTest_Factory $factory Helper that lets us create fake data.
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$admin_id      = $factory->user->create(
@@ -91,13 +104,13 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	 *
 	 */
 	public function test_context_param() {
-		// Collection
+		// Collection.
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items' );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
 		$this->assertEquals( 'view', $data['endpoints'][0]['args']['context']['default'] );
 		$this->assertEquals( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
-		// Single
+		// Single.
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-items/' . $this->menu_item_id );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
@@ -619,8 +632,8 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param $response
-	 * @param string $context
+	 * @param WP_REST_Response $response Response Class.
+	 * @param string           $context Defaults to View.
 	 */
 	protected function check_get_menu_items_response( $response, $context = 'view' ) {
 		$this->assertNotWPError( $response );
@@ -636,8 +649,9 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$post = get_post( $data['id'] );
 			// Base fields for every post.
 			$menu_item = wp_setup_nav_menu_item( $post );
-			// as the links for the post are "response_links" format in the data array we have to pull them
-			// out and parse them.
+			/**
+			 * as the links for the post are "response_links" format in the data array we have to pull them out and parse them.
+			 */
 			$links = $data['_links'];
 			foreach ( $links as &$links_array ) {
 				foreach ( $links_array as &$link ) {
@@ -658,15 +672,15 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param $post
-	 * @param $data
-	 * @param $context
-	 * @param $links
+	 * @param WP_Post $post WP_Post object.
+	 * @param array   $data Data compare.
+	 * @param string  $context Context of REST Request.
+	 * @param array   $links Array links.
 	 */
 	protected function check_menu_item_data( $post, $data, $context, $links ) {
 		$post_type_obj = get_post_type_object( self::POST_TYPE );
 
-		// Standard fields
+		// Standard fields.
 		$this->assertEquals( $post->ID, $data['id'] );
 		$this->assertEquals( wpautop( $post->post_content ), $data['description'] );
 
@@ -684,8 +698,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$this->assertFalse( isset( $data['title'] ) );
 		}
 
-		// post_parent
-
+		// post_parent.
 		$this->assertArrayHasKey( 'parent', $data );
 		if ( $post->post_parent ) {
 			if ( is_int( $data['parent'] ) ) {
@@ -699,7 +712,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$this->assertEmpty( $data['parent'] );
 		}
 
-		// page attributes
+		// page attributes.
 		$this->assertEquals( $post->menu_order, $data['menu_order'] );
 
 		$taxonomies = wp_list_filter( get_object_taxonomies( self::POST_TYPE, 'objects' ), array( 'show_in_rest' => true ) );
@@ -711,7 +724,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 			$this->assertEquals( $terms, $data[ $taxonomy->rest_base ] );
 		}
 
-		// test links
+		// test links.
 		if ( $links ) {
 			$links = test_rest_expand_compact_links( $links );
 			$this->assertEquals( $links['self'][0]['href'], rest_url( 'wp/v2/' . $post_type_obj->rest_base . '/' . $data['id'] ) );
@@ -728,8 +741,8 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param $response
-	 * @param string $context
+	 * @param WP_REST_Response $response Response Class.
+	 * @param string           $context Defaults to View.
 	 */
 	protected function check_get_menu_item_response( $response, $context = 'view' ) {
 		$this->assertNotWPError( $response );
@@ -743,7 +756,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param $response
+	 * @param WP_REST_Response $response Response Class.
 	 */
 	protected function check_create_menu_item_response( $response ) {
 		$this->assertNotWPError( $response );
@@ -760,7 +773,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param $response
+	 * @param WP_REST_Response $response Response Class.
 	 */
 	protected function check_update_menu_item_response( $response ) {
 		$this->assertNotWPError( $response );
@@ -777,7 +790,7 @@ class WP_Test_REST_Nav_Menu_Items_Controller extends WP_Test_REST_Post_Type_Cont
 	}
 
 	/**
-	 * @param array $args
+	 * @param array $args Override params.
 	 *
 	 * @return mixed
 	 */

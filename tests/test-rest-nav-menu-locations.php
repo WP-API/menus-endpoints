@@ -1,14 +1,27 @@
 <?php
+/**
+ * REST API: WP_Test_REST_Nav_Menu_Locations_Controller class
+ *
+ * @package    WordPress
+ * @subpackage REST_API
+ */
 
+/**
+ * Tests for REST API for Menu locations.
+ *
+ * @see WP_Test_REST_Controller_Testcase
+ */
 class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller_Testcase {
 
 	/**
-	 * @var
+	 * @var int
 	 */
 	protected static $admin_id;
 
 	/**
-	 * @param $factory
+	 * Create fake data before our tests run.
+	 *
+	 * @param WP_UnitTest_Factory $factory Helper that lets us create fake data.
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$admin_id = $factory->user->create(
@@ -56,7 +69,7 @@ class WP_Test_REST_Nav_Menu_Locations_Controller extends WP_Test_REST_Controller
 	 *
 	 */
 	public function test_context_param() {
-		// Collection
+		// Collection.
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/menu-locations' );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();

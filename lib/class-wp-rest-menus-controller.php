@@ -127,7 +127,8 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 					'rest_menu_location_invalid',
 					__( 'Invalid menu location.' ),
 					array(
-						'status' => 400,
+						'status'   => 400,
+						'location' => $location,
 					)
 				);
 			}

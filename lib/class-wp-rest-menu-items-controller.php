@@ -334,7 +334,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'menu-item-xfn'         => '',
 				'menu-item-status'      => 'publish',
 			);
-		}//end if
+		}
 
 		$mapping = array(
 			'menu-item-db-id'       => 'id',
@@ -462,7 +462,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					return new WP_Error( 'invalid_item_parent', __( 'Invalid menu item parent.' ), array( 'status' => 400 ) );
 				}
 			}
-		}//end if
+		}
 
 		foreach ( array( 'menu-item-object-id', 'menu-item-parent-id' ) as $key ) {
 			// Note we need to allow negative-integer IDs for previewed objects not inserted yet.
@@ -691,7 +691,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 					'embeddable' => true,
 				);
 			}
-		}//end if
+		}
 
 		return $links;
 	}

@@ -310,7 +310,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 				'menu-item-description' => $menu_item_obj->description,
 				'menu-item-attr-title'  => $menu_item_obj->attr_title,
 				'menu-item-target'      => $menu_item_obj->target,
-				// stored in the database as array.
+				// Stored in the database as a string.
 				'menu-item-classes'     => implode( ' ', $menu_item_obj->classes ),
 				'menu-item-xfn'         => $menu_item_obj->xfn,
 				'menu-item-status'      => $menu_item_obj->post_status,

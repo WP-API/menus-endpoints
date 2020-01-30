@@ -498,7 +498,7 @@ class WP_REST_Menu_Items_Controller extends WP_REST_Posts_Controller {
 			$prepared_nav_item['menu-item-url'] = esc_url_raw( $prepared_nav_item['menu-item-url'] );
 			if ( '' === $prepared_nav_item['menu-item-url'] ) {
 				// Fail sanitization if URL is invalid.
-				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) );
+				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ), array( 'status' => 400 ) );
 			}
 		}
 		// Only draft / publish are valid post status for menu items.

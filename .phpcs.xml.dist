@@ -6,7 +6,15 @@
 	<file>.</file>
 	<exclude-pattern>/vendor/</exclude-pattern>
 	<exclude-pattern>/node_modules/</exclude-pattern>
-	<exclude-pattern>/tests/</exclude-pattern>
+
+    <rule ref="Generic.Commenting">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Commenting.LongConditionClosingComment.Missing">
+        <exclude-pattern>lib/*</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
 
 	<!-- How to scan -->
 	<!-- Usage instructions: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->

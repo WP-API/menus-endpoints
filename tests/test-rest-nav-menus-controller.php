@@ -213,17 +213,7 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 	public function test_update_item() {
 		wp_set_current_user( self::$admin_id );
 
-		$nav_menu_id = wp_update_nav_menu_object(
-			0,
-			array(
-				'description' => 'Original Description',
-				'menu-name'   => 'Original Name',
-			)
-		);
-
-		$term = get_term_by( 'id', $nav_menu_id, self::TAXONOMY );
-
-		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $term->term_id );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/menus/' . $this->menu_id );
 		$request->set_param( 'name', 'New Name' );
 		$request->set_param( 'description', 'New Description' );
 		$request->set_param(
@@ -296,12 +286,13 @@ class WP_Test_REST_Nav_Menus_Controller extends WP_Test_REST_Controller_Testcase
 		$response   = rest_get_server()->dispatch( $request );
 		$data       = $response->get_data();
 		$properties = $data['schema']['properties'];
-		$this->assertEquals( 5, count( $properties ) );
+		$this->assertEquals( 6, count( $properties ) );
 		$this->assertArrayHasKey( 'id', $properties );
 		$this->assertArrayHasKey( 'description', $properties );
 		$this->assertArrayHasKey( 'meta', $properties );
 		$this->assertArrayHasKey( 'name', $properties );
 		$this->assertArrayHasKey( 'slug', $properties );
+		$this->assertArrayHasKey( 'locations', $properties );
 	}
 
 	/**

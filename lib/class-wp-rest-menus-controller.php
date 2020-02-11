@@ -440,7 +440,7 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$new_locations  = array();
 		foreach ( $request['locations'] as $location ) {
 			if ( ! in_array( $location, $menu_locations, true ) ) {
-				return new WP_Error( 'check_assign_locations_permission', __( 'Menu location does not exist.' ), array( 'status' => 400 ) );
+				return new WP_Error( 'invalid_menu_location', __( 'Menu location does not exist.' ), array( 'status' => 400 ) );
 			}
 			$new_locations[ $location ] = $menu_id;
 		}

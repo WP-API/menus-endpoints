@@ -2,7 +2,7 @@
 /**
  * REST API: WP_REST_Menus_Controller class
  *
- * @package WordPress
+ * @package    WordPress
  * @subpackage REST_API
  */
 
@@ -70,6 +70,71 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		$nav_term = wp_get_nav_menu_object( $term );
 
 		return $nav_term;
+	}
+
+	/**
+	 * Checks if a request has access to create a term.
+	 * Also check if request can assign menu locations.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 *
+	 * @return bool|WP_Error True if the request has access to create items, false or WP_Error object otherwise.
+	 */
+	public function create_item_permissions_check( $request ) {
+		$check = $this->check_assign_locations_permission( $request );
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		return parent::create_item_permissions_check( $request );
+	}
+
+	/**
+	 * Checks if a request has access to update the specified term.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 *
+	 * @return bool|WP_Error True if the request has access to update the item, false or WP_Error object otherwise.
+	 */
+	public function update_item_permissions_check( $request ) {
+		$check = $this->check_assign_locations_permission( $request );
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		return parent::update_item_permissions_check( $request );
+	}
+
+	/**
+	 * Checks whether current user can assign all locations sent with the current request.
+	 *
+	 * @param WP_REST_Request $request The request object with post and locations data.
+	 *
+	 * @return bool Whether the current user can assign the provided terms.
+	 */
+	protected function check_assign_locations_permission( $request ) {
+		if ( ! isset( $request['locations'] ) ) {
+			return true;
+		}
+
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'rest_cannot_assign_location', __( 'Sorry, you are not allowed to assign the provided locations.' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+
+		foreach ( $request['locations'] as $location ) {
+			if ( ! array_key_exists( $location, get_registered_nav_menus() ) ) {
+				return new WP_Error(
+					'rest_menu_location_invalid',
+					__( 'Invalid menu location.' ),
+					array(
+						'status'   => 400,
+						'location' => $location,
+					)
+				);
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -196,6 +261,12 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			}
 		}
 
+		$locations_update = $this->handle_locations( $term->term_id, $request );
+
+		if ( is_wp_error( $locations_update ) ) {
+			return $locations_update;
+		}
+
 		$fields_update = $this->update_additional_fields_for_object( $term, $request );
 
 		if ( is_wp_error( $fields_update ) ) {
@@ -276,6 +347,12 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 			}
 		}
 
+		$locations_update = $this->handle_locations( $term->term_id, $request );
+
+		if ( is_wp_error( $locations_update ) ) {
+			return $locations_update;
+		}
+
 		$fields_update = $this->update_additional_fields_for_object( $term, $request );
 
 		if ( is_wp_error( $fields_update ) ) {
@@ -346,6 +423,40 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 	}
 
 	/**
+	 * Updates the menu's locations from a REST request.
+	 *
+	 * @param int             $menu_id The menu id to update the location form.
+	 * @param WP_REST_Request $request The request object with menu and locations data.
+	 *
+	 * @return true|WP_Error WP_Error on an error assigning any of the locations, otherwise null.
+	 */
+	protected function handle_locations( $menu_id, $request ) {
+		if ( ! isset( $request['locations'] ) ) {
+			return true;
+		}
+
+		$menu_locations = get_registered_nav_menus();
+		$menu_locations = array_keys( $menu_locations );
+		$new_locations  = array();
+		foreach ( $request['locations'] as $location ) {
+			if ( ! in_array( $location, $menu_locations, true ) ) {
+				return new WP_Error( 'invalid_menu_location', __( 'Menu location does not exist.' ), array( 'status' => 400 ) );
+			}
+			$new_locations[ $location ] = $menu_id;
+		}
+		$assigned_menu = get_nav_menu_locations();
+		foreach ( $assigned_menu as $location => $term_id ) {
+			if ( $term_id === $menu_id ) {
+				unset( $assigned_menu[ $location ] );
+			}
+		}
+		$new_assignments = array_merge( $assigned_menu, $new_locations );
+		set_theme_mod( 'nav_menu_locations', $new_assignments );
+
+		return true;
+	}
+
+	/**
 	 * Retrieves the term's schema, conforming to JSON Schema.
 	 *
 	 * @return array Item schema data.
@@ -355,6 +466,15 @@ class WP_REST_Menus_Controller extends WP_REST_Terms_Controller {
 		unset( $schema['properties']['count'] );
 		unset( $schema['properties']['link'] );
 		unset( $schema['properties']['taxonomy'] );
+
+		$schema['properties']['locations'] = array(
+			'description' => __( 'The locations assigned to the menu.' ),
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'string',
+			),
+			'context'     => array( 'view', 'edit' ),
+		);
 
 		return $schema;
 	}

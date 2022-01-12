@@ -1,5 +1,11 @@
 # WordPress REST API Navigation Menus Endpoints
 
+## Do not use this plugin
+
+This REST API Menu Endpoints were merged into WordPress Core in version 5.9. To report an issue with those endpoints, [create a trac ticket](https://core.trac.wordpress.org/newticket?component=REST%20API).
+
+---
+
 [![Build Status](https://travis-ci.org/WP-API/menus-endpoints.svg?branch=master)](https://travis-ci.org/WP-API/menus-endpoints)
 
 Feature plugin implementing REST endpoints for WordPress Navigation Menus, Menus Items and Menu locations. 
